@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "altdata-nowcast"
+version = "0.1.0"
+description = "Measuring how much each alternative data source adds to forecasts of company revenue"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.1",
+    "pyarrow>=14",
+    "requests>=2.31",
+    "scikit-learn>=1.4",
+    "lxml>=5",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+nowcast = "nowcast.cli:main"
+
+[tool.setuptools]
+packages = ["nowcast"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

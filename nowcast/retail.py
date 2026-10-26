@@ -70,10 +70,27 @@ def fetch_vintages(client, series, refresh=False):
     return df.dropna(subset=["value"]).assign(series=series)[["series", "date", "value", "realtime_start", "realtime_end"]]
 
 
-def as_of(vintages, t):
-    """Monthly values as published on date t, indexed by month."""
-    v = vintages[(vintages["realtime_start"] <= t) & (vintages["realtime_end"] >= t)]
-    return v.set_index(v["date"].dt.to_period("M"))["value"]
+MODES = ("realtime", "revised", "revised_no_lag")
+
+
+def as_of(vintages, t, mode="realtime"):
+    """Monthly values known on date t, indexed by month.
+
+    realtime: each month as published on t (the honest backtest).
+    revised: today's revised value, but only for months first published by t
+        (isolates the leak from revisions).
+    revised_no_lag: today's revised value for every month, published or not
+        (adds the leak from release timing).
+    """
+    month = vintages["date"].dt.to_period("M")
+    if mode == "realtime":
+        v = vintages[(vintages["realtime_start"] <= t) & (vintages["realtime_end"] >= t)]
+        return v.set_index(v["date"].dt.to_period("M"))["value"]
+    latest = vintages.sort_values("realtime_start").groupby(month)["value"].last()
+    if mode == "revised_no_lag":
+        return latest
+    first_release = vintages.groupby(month)["realtime_start"].min()
+    return latest[first_release <= t]
 
 
 def quarter_months(start, end):
@@ -90,7 +107,7 @@ def _yoy(known, months):
     return np.log(cur[ok].sum() / prior[ok].sum()), int(ok.sum())
 
 
-def retail_features(panel, vintages, mapping):
+def retail_features(panel, vintages, mapping, mode="realtime"):
     """Per firm-quarter: category sales growth vs a year ago over the months published
     by the nowcast date, and its change from the previous quarter (acceleration)."""
     series_of = dict(zip(mapping["ticker"], mapping["retail_series"]))
@@ -102,7 +119,7 @@ def retail_features(panel, vintages, mapping):
             continue
         key = (s, r.nowcast_date, r.start, r.end)
         if key not in cache:
-            known = as_of(by_series[s], r.nowcast_date)
+            known = as_of(by_series[s], r.nowcast_date, mode)
             months = quarter_months(r.start, r.end)
             yoy, n = _yoy(known, months)
             prev_yoy, _ = _yoy(known, months - 3)

@@ -84,3 +84,24 @@ def test_parse_fred_response(monkeypatch):
     df = fetch_vintages(FakeClient(), "RSFSDP")
     assert len(df) == 2  # "." (missing) dropped
     assert df["realtime_end"].max() == pd.Timestamp("2262-01-01")
+
+
+def test_revised_mode_uses_revised_values_but_respects_release_timing():
+    # Revisions land 3 years later; "revised" sees them anyway, but still only 2 months.
+    row = retail_features(PANEL, vintages(1.5, 3), MAP, mode="revised").iloc[0]
+    assert row["retail_months"] == 2
+    assert row["retail__yoy"] == pytest.approx(12 * np.log(1.01))  # uniform revision cancels in a ratio
+
+
+def test_revised_no_lag_sees_unpublished_month():
+    row = retail_features(PANEL, vintages(), MAP, mode="revised_no_lag").iloc[0]
+    assert row["retail_months"] == 3  # March counted although it was published after the nowcast
+
+
+def test_revised_mode_differs_when_revisions_are_uneven():
+    v = vintages(1.0, 3)
+    late = v["realtime_start"] > pd.Timestamp("2018-01-01")
+    v.loc[late & (v["date"] >= pd.Timestamp("2016-01-01")), "value"] *= 1.2  # current year revised up
+    honest = retail_features(PANEL, v, MAP).iloc[0]["retail__yoy"]
+    leaky = retail_features(PANEL, v, MAP, mode="revised").iloc[0]["retail__yoy"]
+    assert leaky == pytest.approx(honest + np.log(1.2))

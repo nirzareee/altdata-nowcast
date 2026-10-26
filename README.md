@@ -1,5 +1,7 @@
 # What Is Data Worth?
 
+[![tests](https://github.com/nirzareee/altdata-nowcast/actions/workflows/tests.yml/badge.svg)](https://github.com/nirzareee/altdata-nowcast/actions/workflows/tests.yml)
+
 **Measuring how much each alternative data source adds to forecasts of company revenue.**
 
 Funds and companies buy external data (web traffic, search trends, app usage, job postings) to see business performance before it is reported. Most of these sources overlap, and it is rarely measured what any one of them adds on top of the others. This project builds a leakage-free forecasting pipeline and uses it to put a number, with uncertainty, on the value of each source.
@@ -93,7 +95,7 @@ Shapley value of each source, measured on all quarters and outside COVID (Apr 20
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"      # installs the `nowcast` command
 export NOWCAST_USER_AGENT="Your Name you@email.com"   # required by SEC and Wikimedia
 export FRED_API_KEY="..."                              # free: fred.stlouisfed.org > My Account > API Keys
 pytest -q
@@ -112,6 +114,7 @@ python -m nowcast.cli value          # Shapley value of each source
 python -m nowcast.cli value --by sector                       # ...overall and within each sector
 python -m nowcast.cli value --ci --metric skill_ex_covid       # ...with 95% confidence intervals
 python -m nowcast.cli report         # final tables + chart -> results/ (scores the holdout; runs once)
+python -m nowcast.cli revision-bias  # retail value with real-time vs revised Census data -> results/revision_bias.md
 python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 ```
 
@@ -159,6 +162,10 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 - [x] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
 - [x] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
 - [x] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
+- [ ] Revision bias: how much revised macro data inflates measured source value
+- [ ] LLM-extracted guidance from 8-K earnings releases
+- [ ] Event study against analyst consensus (WRDS)
+- [ ] Interactive results dashboard
 - [ ] LLM entity resolution (dropped from the core plan: Wikipedia showed no value even with hand-verified pages)
 - [ ] Google Trends, if official API access is granted
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance

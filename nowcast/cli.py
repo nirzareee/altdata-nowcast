@@ -132,6 +132,17 @@ def cmd_report(args):
     print(f"wrote {path} and charts in {path.parent}/")
 
 
+def cmd_revision_bias(args):
+    from .experiments import revision_bias, write_revision_bias
+
+    if not (RETAIL.exists() and RETAIL_MAP.exists()):
+        raise SystemExit("run `retail` first")
+    df = revision_bias(load_panel(args), pd.read_parquet(RETAIL), pd.read_csv(RETAIL_MAP),
+                       args.sources, args.model, args.n_boot)
+    print(df.round(3).to_string(index=False))
+    print(f"wrote {write_revision_bias(df)}")
+
+
 def cmd_value(args):
     from .model import evaluate
     from .valuation import bootstrap_shapley, source_shapley, verdict
@@ -179,6 +190,12 @@ def main():
     s.add_argument("--force", action="store_true", help="rerun even though the holdout was already scored")
     s.set_defaults(where=None)
 
+    s = sub.add_parser("revision-bias", help="value of retail sales with real-time vs revised data")
+    s.add_argument("--sources", nargs="+", default=["rev", "wiki", "retail"])
+    s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
+    s.add_argument("--n-boot", type=int, default=1000)
+    s.set_defaults(where=None)
+
     s = sub.add_parser("retail")
     s.add_argument("--refresh", action="store_true", help="re-download all vintages")
 
@@ -202,7 +219,7 @@ def main():
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"revision-bias": cmd_revision_bias, "report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 
