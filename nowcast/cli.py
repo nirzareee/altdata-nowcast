@@ -7,6 +7,8 @@ OUT = Path("data/processed")
 REVENUE = OUT / "revenue_quarterly.parquet"
 PAGEVIEWS = OUT / "pageviews_daily.parquet"
 PANEL = OUT / "panel.parquet"
+RETAIL = OUT / "retail_vintages.parquet"
+RETAIL_MAP = OUT / "retail_map.csv"
 UNIVERSE = "config/universe_sp500.csv"
 
 
@@ -57,12 +59,27 @@ def cmd_pageviews(args):
     report_missing(missing)
 
 
+def cmd_retail(args):
+    from .http import Client
+    from .retail import build_retail
+
+    df, mapping, missing = build_retail(Client(), read_universe(args), args.refresh)
+    df.to_parquet(RETAIL, index=False)
+    mapping[["ticker", "sub_industry", "retail_series"]].to_csv(RETAIL_MAP, index=False)
+    print(f"wrote {len(df):,} vintage rows for {df['series'].nunique()} series to {RETAIL}")
+    print(f"firm -> category map in {RETAIL_MAP}:")
+    print(mapping["retail_series"].value_counts().to_string())
+    report_missing(missing)
+
+
 def load_data(args):
     if args.synthetic:
         from .synthetic import make_firms
         return make_firms()
     pv = pd.read_parquet(PAGEVIEWS) if PAGEVIEWS.exists() else None
-    return pd.read_parquet(REVENUE), pv
+    retail = pd.read_parquet(RETAIL) if RETAIL.exists() else None
+    retail_map = pd.read_csv(RETAIL_MAP) if RETAIL_MAP.exists() else None
+    return pd.read_parquet(REVENUE), pv, retail, retail_map
 
 
 def cmd_panel(args):
@@ -71,6 +88,8 @@ def cmd_panel(args):
     panel = build_panel(*load_data(args))
     panel.to_parquet(PANEL, index=False)
     print(f"wrote {len(panel):,} rows x {panel.shape[1]} cols to {PANEL}")
+    if "retail_months" in panel:
+        print("retail months published by nowcast date:", panel["retail_months"].value_counts().sort_index().to_dict())
     feats = [c for c in panel.columns if "__" in c]
     print("feature coverage:", ", ".join(f"{c} {panel[c].notna().mean():.0%}" for c in feats))
     extreme = panel.reindex(panel["yoy_growth"].abs().sort_values(ascending=False).index).head(5)
@@ -132,12 +151,15 @@ def main():
         s.add_argument("--start", default="2015-07-01")
         s.add_argument("--end", default=str((pd.Timestamp.today() - pd.Timedelta(days=2)).date()))
 
+    s = sub.add_parser("retail")
+    s.add_argument("--refresh", action="store_true", help="re-download all vintages")
+
     s = sub.add_parser("panel")
     s.add_argument("--synthetic", action="store_true", help="use simulated firms instead of downloads")
 
     for name in ("evaluate", "value"):
         s = sub.add_parser(name)
-        s.add_argument("--sources", nargs="+", default=["rev", "wiki"])
+        s.add_argument("--sources", nargs="+", default=["rev", "wiki", "retail"])
         s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
         s.add_argument("--where", help="filter by a universe column, e.g. sector='Consumer Staples'")
         if name == "value":
@@ -148,7 +170,7 @@ def main():
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"universe": cmd_universe, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 

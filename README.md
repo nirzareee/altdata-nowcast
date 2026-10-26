@@ -53,6 +53,7 @@ Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia p
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export NOWCAST_USER_AGENT="Your Name you@email.com"   # required by SEC and Wikimedia
+export FRED_API_KEY="..."                              # free: fred.stlouisfed.org > My Account > API Keys
 pytest -q
 ```
 
@@ -62,6 +63,7 @@ pytest -q
 python -m nowcast.cli universe       # firm list        -> config/universe_sp500.csv
 python -m nowcast.cli targets        # SEC revenue      -> data/processed/revenue_quarterly.parquet
 python -m nowcast.cli pageviews      # Wikipedia views  -> data/processed/pageviews_daily.parquet
+python -m nowcast.cli retail         # Census retail sales, every vintage -> data/processed/retail_vintages.parquet
 python -m nowcast.cli panel          # features         -> data/processed/panel.parquet
 python -m nowcast.cli evaluate       # forecast skill per source combination
 python -m nowcast.cli value          # Shapley value of each source
@@ -97,6 +99,8 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | Don't train on COVID quarters; Huber loss; clip at ±100 pts | One extreme regime shouldn't set the rules for every other quarter |
 | Growth features only, no levels | Raw pageviews are not comparable across firms |
 | Study starts 2016 | Pageviews begin July 2015; every quarter needs a year-ago window |
+| Census retail sales taken from ALFRED vintages | Retail sales are revised for years; using today's numbers would leak revisions. Each feature uses only figures published by the nowcast date, which is usually 2 of the quarter's 3 months |
+| Firms mapped to Census categories by GICS sub-industry (`nowcast/retail.py`) | A fixed rule, auditable in `data/processed/retail_map.csv`; unmatched firms use total retail and food services |
 | Exact Shapley over sources | 2ⁿ model runs is affordable for up to ~10 sources |
 
 `tests/test_pipeline.py` checks the time alignment directly: it changes every value published after a cutoff and asserts earlier features don't move.
@@ -105,8 +109,9 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 
 - [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
 - [x] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
-- [ ] **Step 3.** Google Trends
+- [ ] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
 - [ ] **Step 4.** LLM entity resolution: map firms to brands, apps and pages
+- [ ] Google Trends, if official API access is granted
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance
 - [ ] Hierarchical Bayesian model; conformal prediction intervals
 - [ ] Bootstrap confidence intervals on source values; value decay over time; value by sector

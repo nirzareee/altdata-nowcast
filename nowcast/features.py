@@ -87,9 +87,12 @@ def log_growth(revenue):
     return r
 
 
-def build_panel(revenue, pageviews=None, study_start=STUDY_START):
+def build_panel(revenue, pageviews=None, retail=None, retail_map=None, study_start=STUDY_START):
     panel = quarter_panel(log_growth(revenue))
     panel = panel[panel["start"] >= study_start].reset_index(drop=True)
     if pageviews is not None and not pageviews.empty:
         panel = daily_source_features(panel, pageviews_daily(pageviews), "wiki")
+    if retail is not None and retail_map is not None:
+        from .retail import retail_features
+        panel = retail_features(panel, retail, retail_map)
     return panel
