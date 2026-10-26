@@ -2,9 +2,11 @@
 
 For each calendar quarter of nowcast dates, a model is trained only on
 firm-quarters whose revenue had been filed before the earliest nowcast
-date in that quarter, then predicts the quarter. Two references:
-"naive" (growth stays at the last reported rate) is reported for context;
-the no-source model (historical mean) is the zero point for valuing sources.
+date in that quarter, then predicts the quarter.
+
+Models predict the change from the naive forecast (growth stays at the last
+reported rate), so with no useful data they fall back to naive rather than
+to noise. The no-source model adds only the average historical change.
 """
 import numpy as np
 import pandas as pd
@@ -15,10 +17,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 MODELS = {
-    "ridge": lambda: make_pipeline(SimpleImputer(), StandardScaler(), Ridge(alpha=1.0)),
-    "gbm": lambda: HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=200, random_state=0),
+    "ridge": lambda: make_pipeline(SimpleImputer(), StandardScaler(), Ridge(alpha=10.0)),
+    "gbm": lambda: HistGradientBoostingRegressor(max_depth=2, learning_rate=0.05, max_iter=100, random_state=0),
 }
 HOLDOUT_START = pd.Timestamp("2024-07-01")
+COVID = (pd.Timestamp("2020-04-01"), pd.Timestamp("2021-12-31"))  # quarters ending in this range
 
 
 def source_columns(panel, sources):
@@ -43,22 +46,22 @@ def walk_forward(panel, sources, model="ridge", holdout=False, min_train=100):
         train = labeled[labeled["filed"] < cutoff]
         if len(train) < min_train:
             continue
+        change = train["yoy_growth"] - train["rev__last_yoy"]
         test = test.assign(naive=test["rev__last_yoy"], train_last_filed=train["filed"].max())
         usable = [c for c in cols if train[c].notna().any()]
         if usable:
             m = MODELS[model]()
-            m.fit(train[usable], train["yoy_growth"])
-            test["pred"] = m.predict(test[usable])
+            m.fit(train[usable], change)
+            test["pred"] = test["naive"] + m.predict(test[usable])
         else:
-            # No sources: historical mean. Growth mean-reverts, so this already beats
-            # naive; valuing sources against it stops that gain being credited to data.
-            test["pred"] = train["yoy_growth"].mean()
+            test["pred"] = test["naive"] + change.mean()
         preds.append(test)
     return pd.concat(preds, ignore_index=True) if preds else pd.DataFrame()
 
 
 def score(preds):
     err, base = (preds["pred"] - preds["yoy_growth"]).abs(), (preds["naive"] - preds["yoy_growth"]).abs()
+    covid = preds["end"].between(*COVID)
     # Direction of change in growth: will this quarter accelerate or decelerate vs last reported?
     actual_dir = np.sign(preds["yoy_growth"] - preds["naive"])
     pred_dir = np.sign(preds["pred"] - preds["naive"])
@@ -68,6 +71,7 @@ def score(preds):
         "mae": err.mean(),
         "naive_mae": base.mean(),
         "skill": 1 - err.mean() / base.mean(),
+        "skill_ex_covid": 1 - err[~covid].mean() / base[~covid].mean(),
         "accel_hit_rate": (actual_dir[moved] == pred_dir[moved]).mean() if moved.any() else np.nan,
     }
 

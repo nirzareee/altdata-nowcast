@@ -54,7 +54,7 @@ def test_no_signal_when_none_planted():
 def test_handles_source_missing_early(panel, model):
     """Real sources start at different dates; empty columns early on must not crash."""
     p = panel.copy()
-    p.loc[p["end"] < pd.Timestamp("2019-01-01"), ["wiki__log_level", "wiki__yoy", "wiki__qoq"]] = float("nan")
+    p.loc[p["end"] < pd.Timestamp("2019-01-01"), ["wiki__yoy", "wiki__qoq"]] = float("nan")
     assert evaluate(p, SOURCES, model)["n"] > 0
 
 

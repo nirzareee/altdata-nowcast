@@ -45,8 +45,9 @@ def _window_mean(dates, values, lo, hi):
 def daily_source_features(panel, daily, source):
     """Quarterly features from a daily series with columns ticker, date, value, available_at.
 
-    For each firm-quarter: log level over the quarter, and log growth vs the
-    same window a year earlier and vs the previous quarter.
+    For each firm-quarter: log growth vs the same window a year earlier and
+    vs the previous quarter. Levels are left out: raw attention is not
+    comparable across firms (Walmart's page always outdraws Wingstop's).
     """
     year, quarter = pd.DateOffset(years=1), pd.Timedelta(days=91)
     out = []
@@ -61,7 +62,6 @@ def daily_source_features(panel, daily, source):
             out.append({
                 "ticker": ticker,
                 "end": r.end,
-                f"{source}__log_level": np.log1p(cur),
                 f"{source}__yoy": np.log1p(cur) - np.log1p(last_year),
                 f"{source}__qoq": np.log1p(cur) - np.log1p(last_q),
             })

@@ -1,59 +1,87 @@
 # What Is Data Worth?
 
-Valuing alternative data sources for probabilistic revenue nowcasting.
+**Measuring how much each alternative data source adds to forecasts of company revenue.**
+
+Funds and companies buy external data (web traffic, search trends, app usage, job postings) to see business performance before it is reported. Most of these sources overlap, and it is rarely measured what any one of them adds on top of the others. This project builds a leakage-free forecasting pipeline and uses it to put a number, with uncertainty, on the value of each source.
+
+The test case: nowcast quarterly revenue growth for US consumer companies a week after each quarter ends, weeks before the company reports it.
+
+## How it works
+
+1. **Collect** revenue from SEC filings and daily signals from public sources.
+2. **Align in time.** Every value carries the date it became public. A forecast made on date `t` sees only data public before `t`.
+3. **Forecast** with walk-forward models: for each quarter, train only on quarters already reported, then predict.
+4. **Value each source** with Shapley values: a source's average contribution to forecast skill across every combination of the other sources. Overlapping sources share credit instead of each claiming it.
+
+## Current status
+
+Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
+
+Early findings, before tuning:
+
+- **Wikipedia attention tracks revenue for platforms, not big-box retail.** Per-firm correlation between pageview growth and revenue growth is 0.5–0.6 for Airbnb, Lyft, Etsy and Uber, and near zero or negative for Walmart, Target, Costco, McDonald's and Yum.
+- **COVID dominates raw error.** Forecast errors in 2020–21 are 4–6× other years, so results are reported with and without those quarters.
+- **Predicting growth from scratch underperformed the naive forecast** in normal years. Models now predict the change from last quarter's growth instead.
 
 ## Setup
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-export NOWCAST_USER_AGENT="Your Name you@stonybrook.edu"   # required by SEC and Wikimedia
+export NOWCAST_USER_AGENT="Your Name you@email.com"   # required by SEC and Wikimedia
+pytest -q
 ```
 
-## Pipeline
+## Usage
 
 ```bash
 python -m nowcast.cli targets        # SEC revenue      -> data/processed/revenue_quarterly.parquet
 python -m nowcast.cli pageviews      # Wikipedia views  -> data/processed/pageviews_daily.parquet
 python -m nowcast.cli panel          # features         -> data/processed/panel.parquet
-python -m nowcast.cli evaluate       # walk-forward skill per source combination
+python -m nowcast.cli evaluate       # forecast skill per source combination
 python -m nowcast.cli value          # Shapley value of each source
-pytest -q
 ```
 
-Try the last three on simulated firms first: `python -m nowcast.cli panel --synthetic`.
+`python -m nowcast.cli panel --synthetic` builds simulated firms with a planted signal; the pipeline should find it.
 
-`evaluate --holdout` scores the period from 2024-07-01 on. Run it once, at the end.
+`evaluate --holdout` scores the period from 2024-07-01 on. It is run once, at the end.
 
-## How a forecast is made
-
-1. **Nowcast date** = quarter end + 7 days, weeks before most firms report.
-2. **Features** use only data knowable by that date: revenue by `filed`, pageviews by `available_at`.
-3. **Training** uses only firm-quarters whose revenue was filed before the nowcast date.
-4. **Target** is year-over-year revenue growth.
-
-## Reading the results
+### Reading `evaluate`
 
 | Column | Meaning |
 | --- | --- |
-| `skill` | 1 − MAE / naive MAE. Naive = growth stays at the last reported rate |
-| `accel_hit_rate` | How often the model gets the direction of change in growth right |
-| `(mean)` row | Model with no data: predicts historical average growth |
+| `skill` | 1 − MAE / naive MAE. Naive = growth stays at the last reported rate. Above 0 beats naive |
+| `skill_ex_covid` | Same, excluding quarters ending Apr 2020 – Dec 2021 |
+| `accel_hit_rate` | How often the forecast gets the direction of change in growth right |
+| `(mean)` row | No data: naive plus the average historical change |
 
-Source value is measured against the `(mean)` row, not against naive. Growth mean-reverts, so the historical mean already beats naive; measuring against naive would credit that gain to whatever data the model uses.
+## Design decisions
 
-## Point-in-time rules
+| Decision | Why |
+| --- | --- |
+| Keep first-reported revenue, not restated | Restatements were not known at forecast time |
+| Derive Q4 as fiscal year minus Q1–Q3 | Q4 is only reported inside the 10-K |
+| Target year-over-year growth | Comparable across firm sizes; removes seasonality |
+| Predict change from last growth | Small, noisy panel; anchoring on naive avoids fitting noise |
+| Growth features only, no levels | Raw pageviews are not comparable across firms |
+| Study starts 2016 | Pageviews begin July 2015; every quarter needs a year-ago window |
+| Exact Shapley over sources | 2ⁿ model runs is affordable for up to ~10 sources |
 
-| Data | Value kept | Knowable at |
-| --- | --- | --- |
-| Quarterly revenue | First reported (`value`); latest restatement in `value_latest` | `filed` date of first filing |
-| Q4 revenue | Fiscal year minus Q1–Q3 (`source = derived_q4`) | 10-K `filed` date |
-| Pageviews | Daily human views | `available_at` = day after |
+`tests/test_pipeline.py` checks the time alignment directly: it changes every value published after a cutoff and asserts earlier features don't move.
 
-`tests/test_pipeline.py` checks this directly: it changes every value published after a cutoff and asserts earlier features don't move.
+## Roadmap
 
-## Known issues to audit
+- [x] SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
+- [ ] Google Trends
+- [ ] Expand to ~100 firms selected by industry code
+- [ ] LLM entity resolution: map firms to brands, apps and pages automatically
+- [ ] Job postings, Reddit/news mentions, earnings-call guidance
+- [ ] Hierarchical Bayesian model; conformal prediction intervals
+- [ ] Bootstrap confidence intervals on source values; value decay over time; value by sector
+- [ ] Comparison with analyst consensus; earnings-announcement event study
 
-- Revenue tags: when several revenue tags cover one period, the largest is kept. Check `tag` for firms that switched around 2018 (ASC 606).
-- Wikipedia titles in `config/universe.csv` are a hand-made v0. Renamed pages lose history; redirects only count direct hits.
-- 27 firms is a pilot. Results need 100+ firms before they mean much.
+## Known issues
+
+- When several revenue tags cover one period, the largest is kept. Audit the `tag` column for firms that switched around 2018 (ASC 606).
+- Wikipedia titles in `config/universe.csv` are hand-picked. Renamed pages lose history; redirects count only direct hits.
+- 27 firms is a pilot; conclusions need the full universe.
