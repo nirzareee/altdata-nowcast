@@ -124,8 +124,8 @@ def add_yoy(q):
     return merged.drop(columns=["target_end", "prior_end"]).sort_values("end").reset_index(drop=True)
 
 
-def build_targets(client, tickers, refresh=False):
-    ciks = ticker_to_cik(client)
+def build_targets(client, tickers, refresh=False, ciks=None):
+    ciks = ciks or ticker_to_cik(client)
     frames, missing = [], []
     for t in tickers:
         cik = ciks.get(t)

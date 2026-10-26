@@ -28,7 +28,28 @@ class Client:
         path = CACHE / cache_key if cache_key else None
         if path and path.exists() and not refresh:
             return json.loads(path.read_text())
+        r = self._get(url)
+        if r is None:
+            return None
+        data = r.json()
+        if path:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(data))
+        return data
 
+    def get_text(self, url, cache_key=None, refresh=False):
+        path = CACHE / cache_key if cache_key else None
+        if path and path.exists() and not refresh:
+            return path.read_text()
+        r = self._get(url)
+        if r is None:
+            return None
+        if path:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(r.text)
+        return r.text
+
+    def _get(self, url):
         for attempt in range(self.retries):
             wait = self.min_interval - (time.monotonic() - self._last)
             if wait > 0:
@@ -41,10 +62,4 @@ class Client:
                 time.sleep(2 ** attempt)
                 continue
             r.raise_for_status()
-            break
-
-        data = r.json()
-        if path:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(data))
-        return data
+            return r

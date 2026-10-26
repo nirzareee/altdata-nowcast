@@ -46,12 +46,17 @@ pytest -q
 ## Usage
 
 ```bash
+python -m nowcast.cli universe       # firm list        -> config/universe_sp500.csv
 python -m nowcast.cli targets        # SEC revenue      -> data/processed/revenue_quarterly.parquet
 python -m nowcast.cli pageviews      # Wikipedia views  -> data/processed/pageviews_daily.parquet
 python -m nowcast.cli panel          # features         -> data/processed/panel.parquet
 python -m nowcast.cli evaluate       # forecast skill per source combination
 python -m nowcast.cli value          # Shapley value of each source
+python -m nowcast.cli value --by sector                       # ...overall and within each sector
+python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 ```
+
+**Universe rule:** every S&P 500 member in Consumer Discretionary, Consumer Staples or Communication Services (103 firms). CIK and Wikipedia article come from the constituents table, so nothing is hand-picked. The 27-firm pilot list is kept in `config/universe.csv` (`--universe config/universe.csv`).
 
 `python -m nowcast.cli panel --synthetic` builds simulated firms with a planted signal; the pipeline should find it.
 
@@ -86,7 +91,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 ## Roadmap
 
 - [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
-- [ ] **Step 2.** Expand to ~100 firms chosen by a fixed rule, with automatic Wikipedia mapping
+- [ ] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
 - [ ] **Step 3.** Google Trends
 - [ ] **Step 4.** LLM entity resolution: map firms to brands, apps and pages
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance
@@ -96,6 +101,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 
 ## Known issues
 
+- The universe uses today's S&P 500 members, so firms that shrank and left the index are missing (survivorship bias). Revenue forecasts are less exposed to this than return studies, but the event study in a later step will need historical membership.
 - When several revenue tags cover one period, the largest is kept. Audit the `tag` column for firms that switched around 2018 (ASC 606).
 - Wikipedia titles in `config/universe.csv` are hand-picked. Renamed pages lose history; redirects count only direct hits.
 - 27 firms is a pilot; conclusions need the full universe.

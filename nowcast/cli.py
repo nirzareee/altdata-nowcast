@@ -7,6 +7,7 @@ OUT = Path("data/processed")
 REVENUE = OUT / "revenue_quarterly.parquet"
 PAGEVIEWS = OUT / "pageviews_daily.parquet"
 PANEL = OUT / "panel.parquet"
+UNIVERSE = "config/universe_sp500.csv"
 
 
 def report_missing(missing):
@@ -16,12 +17,30 @@ def report_missing(missing):
             print("  ", m)
 
 
+def read_universe(args):
+    if not Path(args.universe).exists():
+        raise SystemExit(f"{args.universe} not found; run: python -m nowcast.cli universe")
+    return pd.read_csv(args.universe, comment="#")
+
+
+def cmd_universe(args):
+    from .http import Client
+    from .universe import build_universe
+
+    df = build_universe(Client(), args.refresh)
+    df.to_csv(UNIVERSE, index=False)
+    print(f"wrote {len(df)} firms to {UNIVERSE}")
+    print(df["sector"].value_counts().to_string())
+    report_missing(df.loc[df["wiki_articles"].isna(), "ticker"].tolist())
+
+
 def cmd_targets(args):
     from .edgar import build_targets
     from .http import Client
 
-    universe = pd.read_csv(args.universe, comment="#")
-    df, missing = build_targets(Client(), universe["ticker"].tolist(), args.refresh)
+    universe = read_universe(args)
+    ciks = dict(zip(universe["ticker"], universe["cik"])) if "cik" in universe else None
+    df, missing = build_targets(Client(), universe["ticker"].tolist(), args.refresh, ciks)
     df.to_parquet(REVENUE, index=False)
     print(f"wrote {len(df):,} firm-quarters to {REVENUE}")
     report_missing(missing)
@@ -31,7 +50,7 @@ def cmd_pageviews(args):
     from .http import Client
     from .pageviews import build_pageviews
 
-    universe = pd.read_csv(args.universe, comment="#")
+    universe = read_universe(args)
     df, missing = build_pageviews(Client(), universe, args.start, args.end, args.refresh)
     df.to_parquet(PAGEVIEWS, index=False)
     print(f"wrote {len(df):,} daily rows to {PAGEVIEWS}")
@@ -55,12 +74,16 @@ def cmd_panel(args):
 
 
 def load_panel(args):
+    """Panel joined to universe columns (sector, ...), optionally filtered by --where col=value."""
     panel = pd.read_parquet(PANEL)
-    if args.business:
-        universe = pd.read_csv(args.universe, comment="#")
-        keep = universe.loc[universe["business"] == args.business, "ticker"]
-        panel = panel[panel["ticker"].isin(keep)]
-        print(f"{args.business}: {panel['ticker'].nunique()} firms")
+    if not (args.where or getattr(args, "by", None)):
+        return panel
+    info = read_universe(args).drop(columns=["wiki_articles", "company", "cik"], errors="ignore")
+    panel = panel.merge(info, on="ticker", how="left")
+    if args.where:
+        col, value = args.where.split("=", 1)
+        panel = panel[panel[col] == value]
+        print(f"{args.where}: {panel['ticker'].nunique()} firms")
     return panel
 
 
@@ -76,17 +99,27 @@ def cmd_evaluate(args):
 
 
 def cmd_value(args):
+    from .model import evaluate
     from .valuation import source_shapley
 
-    phi, _ = source_shapley(load_panel(args), args.sources, args.model)
-    for s, v in sorted(phi.items(), key=lambda kv: -kv[1]):
-        print(f"{s:10} {v:+.3f}")
+    panel = load_panel(args)
+    groups = [("all", panel)]
+    if args.by:
+        groups += list(panel.groupby(args.by))
+    rows = []
+    for name, g in groups:
+        phi, _ = source_shapley(g, args.sources, args.model)
+        rows.append({"group": name, "firms": g["ticker"].nunique(), "n": evaluate(g, [], args.model)["n"], **phi})
+    print(pd.DataFrame(rows).round(3).to_string(index=False))
 
 
 def main():
     p = argparse.ArgumentParser(prog="nowcast")
-    p.add_argument("--universe", default="config/universe.csv")
+    p.add_argument("--universe", default=UNIVERSE)
     sub = p.add_subparsers(dest="command", required=True)
+
+    s = sub.add_parser("universe")
+    s.add_argument("--refresh", action="store_true", help="re-download the constituents list")
 
     for name in ("targets", "pageviews"):
         s = sub.add_parser(name)
@@ -101,14 +134,16 @@ def main():
         s = sub.add_parser(name)
         s.add_argument("--sources", nargs="+", default=["rev", "wiki"])
         s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
-        s.add_argument("--business", choices=["digital", "physical"], help="only firms of this business model")
+        s.add_argument("--where", help="filter by a universe column, e.g. sector='Consumer Staples'")
+        if name == "value":
+            s.add_argument("--by", help="also value sources within each group of this column, e.g. sector")
         if name == "evaluate":
             s.add_argument("--holdout", action="store_true", help="score the untouched holdout period")
             s.add_argument("--train-covid", action="store_true", help="also train on Apr 2020 - Dec 2021")
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"universe": cmd_universe, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 

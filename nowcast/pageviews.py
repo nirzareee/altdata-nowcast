@@ -28,6 +28,9 @@ def build_pageviews(client, universe, start, end, refresh=False):
     """universe: DataFrame with columns ticker, wiki_articles (';'-separated)."""
     frames, missing = [], []
     for row in universe.itertuples():
+        if not isinstance(row.wiki_articles, str):
+            missing.append((row.ticker, None))
+            continue
         for article in filter(None, (a.strip() for a in row.wiki_articles.split(";"))):
             df = fetch_article(client, article, start, end, refresh)
             if df is None:
