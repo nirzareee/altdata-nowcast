@@ -50,6 +50,23 @@ def test_no_signal_when_none_planted():
     assert abs(gain) < 0.03
 
 
+@pytest.mark.parametrize("model", ["ridge", "gbm"])
+def test_handles_source_missing_early(panel, model):
+    """Real sources start at different dates; empty columns early on must not crash."""
+    p = panel.copy()
+    p.loc[p["end"] < pd.Timestamp("2019-01-01"), ["wiki__log_level", "wiki__yoy", "wiki__qoq"]] = float("nan")
+    assert evaluate(p, SOURCES, model)["n"] > 0
+
+
+def test_panel_starts_at_study_start(data):
+    revenue, views = data
+    early = revenue.assign(start=revenue["start"] - pd.DateOffset(years=3),
+                           end=revenue["end"] - pd.DateOffset(years=3),
+                           filed=revenue["filed"] - pd.DateOffset(years=3))
+    panel = build_panel(pd.concat([early, revenue]), views)
+    assert panel["start"].min() >= pd.Timestamp("2016-01-01")
+
+
 def test_shapley_credits_the_informative_source(panel):
     phi, values = source_shapley(panel, SOURCES)
     assert phi["wiki"] > phi["rev"]

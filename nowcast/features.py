@@ -10,6 +10,9 @@ import pandas as pd
 
 NOWCAST_LAG = pd.Timedelta(days=7)  # forecast a week after quarter end, weeks before earnings
 MIN_DAYS = 60  # a quarter window needs this many observed days to count
+# Wikipedia pageviews start 2015-07-01; 2016 gives every quarter a full year-ago window.
+# All models are trained and scored on the same rows, so sources are compared fairly.
+STUDY_START = pd.Timestamp("2016-01-01")
 
 
 def quarter_panel(revenue, lag=NOWCAST_LAG):
@@ -73,8 +76,9 @@ def pageviews_daily(pageviews):
     )
 
 
-def build_panel(revenue, pageviews=None):
+def build_panel(revenue, pageviews=None, study_start=STUDY_START):
     panel = quarter_panel(revenue)
+    panel = panel[panel["start"] >= study_start].reset_index(drop=True)
     if pageviews is not None and not pageviews.empty:
         panel = daily_source_features(panel, pageviews_daily(pageviews), "wiki")
     return panel

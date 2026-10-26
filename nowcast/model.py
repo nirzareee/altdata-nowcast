@@ -44,10 +44,11 @@ def walk_forward(panel, sources, model="ridge", holdout=False, min_train=100):
         if len(train) < min_train:
             continue
         test = test.assign(naive=test["rev__last_yoy"], train_last_filed=train["filed"].max())
-        if cols:
+        usable = [c for c in cols if train[c].notna().any()]
+        if usable:
             m = MODELS[model]()
-            m.fit(train[cols], train["yoy_growth"])
-            test["pred"] = m.predict(test[cols])
+            m.fit(train[usable], train["yoy_growth"])
+            test["pred"] = m.predict(test[usable])
         else:
             # No sources: historical mean. Growth mean-reverts, so this already beats
             # naive; valuing sources against it stops that gain being credited to data.
