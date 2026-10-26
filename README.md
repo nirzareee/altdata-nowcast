@@ -17,6 +17,21 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 
 Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
 
+### Step 3 results: Census retail sales (ALFRED vintages), 99 firms
+
+Shapley value of each source, measured on all quarters and outside COVID (Apr 2020 – Dec 2022):
+
+| Group | Revenue history | Wikipedia | Retail sales | Retail sales, ex-COVID |
+| --- | --- | --- | --- | --- |
+| All | +0.056 | −0.005 | **+0.030** | −0.003 |
+| Consumer Discretionary | +0.042 | −0.002 | +0.029 | −0.004 |
+| Consumer Staples | +0.080 | −0.002 | +0.010 | +0.003 |
+| Communication Services | +0.058 | −0.006 | −0.020 | −0.007 |
+
+- **Category retail sales are a shock detector, not a steady signal.** All of their value comes from COVID, when whole categories moved together; in normal quarters they add nothing.
+- **The value tracks the economic link.** It is highest for retailers and restaurants (direct category match) and negative for Communication Services (mapped to total retail, no real link).
+- **Revenue history stays the most valuable source**, +0.050 outside COVID.
+
 ### Step 2 results (99 S&P 500 consumer firms, Huber model, log growth)
 
 | Group | Firms | n | Revenue history: Shapley value | Wikipedia: Shapley value |
@@ -68,6 +83,7 @@ python -m nowcast.cli panel          # features         -> data/processed/panel.
 python -m nowcast.cli evaluate       # forecast skill per source combination
 python -m nowcast.cli value          # Shapley value of each source
 python -m nowcast.cli value --by sector                       # ...overall and within each sector
+python -m nowcast.cli value --ci --metric skill_ex_covid       # ...with 95% confidence intervals
 python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 ```
 
@@ -86,6 +102,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | `skill` | 1 − MAE / naive MAE. Naive = growth stays at the last reported rate. Above 0 beats naive |
 | `skill_ex_covid` | Same, excluding quarters ending Apr 2020 – Dec 2022 (2022 is compared against COVID-year revenue) |
 | `accel_hit_rate` | How often the forecast gets the direction of change in growth right |
+| `dm_t`, `dm_p` | Diebold-Mariano test against naive: t-statistic (positive = better) and p-value |
 | `(mean)` row | No data: naive plus the average historical change |
 
 ## Design decisions
@@ -101,6 +118,8 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | Study starts 2016 | Pageviews begin July 2015; every quarter needs a year-ago window |
 | Census retail sales taken from ALFRED vintages | Retail sales are revised for years; using today's numbers would leak revisions. Each feature uses only figures published by the nowcast date, which is usually 2 of the quarter's 3 months |
 | Firms mapped to Census categories by GICS sub-industry (`nowcast/retail.py`) | A fixed rule, auditable in `data/processed/retail_map.csv`; unmatched firms use total retail and food services |
+| Confidence intervals resample forecasts, clustered by firm and separately by quarter | Errors are correlated within a firm and within a quarter (common shocks); a source counts as valuable only if both intervals exclude zero |
+| Diebold-Mariano on quarterly mean loss differentials, Newey-West SE (4 lags) | Collapsing to one value per quarter handles cross-firm correlation; Newey-West handles correlation across nearby quarters |
 | Exact Shapley over sources | 2ⁿ model runs is affordable for up to ~10 sources |
 
 `tests/test_pipeline.py` checks the time alignment directly: it changes every value published after a cutoff and asserts earlier features don't move.
@@ -109,8 +128,10 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 
 - [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
 - [x] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
-- [ ] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
-- [ ] **Step 4.** LLM entity resolution: map firms to brands, apps and pages
+- [x] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
+- [ ] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
+- [ ] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
+- [ ] LLM entity resolution (dropped from the core plan: Wikipedia showed no value even with hand-verified pages)
 - [ ] Google Trends, if official API access is granted
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance
 - [ ] Hierarchical Bayesian model; conformal prediction intervals

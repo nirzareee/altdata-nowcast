@@ -112,19 +112,22 @@ def load_panel(args):
 
 
 def cmd_evaluate(args):
-    from .model import evaluate
+    from .model import score, walk_forward
+    from .stats import diebold_mariano
 
     panel = load_panel(args)
     rows = []
     for sources in ([], *[[s] for s in args.sources], args.sources):
-        r = evaluate(panel, sources, args.model, args.holdout, args.train_covid)
-        rows.append({"sources": "+".join(sources) or "(mean)", **r})
+        preds = walk_forward(panel, sources, args.model, args.holdout, train_covid=args.train_covid)
+        _, dm_t, dm_p = diebold_mariano(preds)
+        rows.append({"sources": "+".join(sources) or "(mean)", **score(preds), "dm_t": dm_t, "dm_p": dm_p})
     print(pd.DataFrame(rows).round(3).to_string(index=False))
+    print("dm_t > 0: beats naive; dm_p: Diebold-Mariano p-value (quarterly loss differentials, Newey-West SE)")
 
 
 def cmd_value(args):
     from .model import evaluate
-    from .valuation import source_shapley
+    from .valuation import bootstrap_shapley, source_shapley
 
     panel = load_panel(args)
     groups = [("all", panel)]
@@ -132,9 +135,21 @@ def cmd_value(args):
         groups += list(panel.groupby(args.by))
     rows = []
     for name, g in groups:
-        phi, _ = source_shapley(g, args.sources, args.model, args.metric)
-        rows.append({"group": name, "firms": g["ticker"].nunique(), "n": evaluate(g, [], args.model)["n"], **phi})
-    print(pd.DataFrame(rows).round(3).to_string(index=False))
+        base = {"group": name, "firms": g["ticker"].nunique(), "n": evaluate(g, [], args.model)["n"]}
+        if not args.ci:
+            phi, _ = source_shapley(g, args.sources, args.model, args.metric)
+            rows.append({**base, **{s: f"{v:+.3f}" for s, v in phi.items()}})
+            continue
+        res = bootstrap_shapley(g, args.sources, args.model, args.metric, args.n_boot)
+        for s, r in res.items():
+            excludes_zero = all(lo > 0 or hi < 0 for lo, hi in (r["ticker"], r["quarter"]))
+            rows.append({**base, "source": s, "value": f"{r['value']:+.3f}",
+                         "95% CI, firms": "[{:+.3f}, {:+.3f}]".format(*r["ticker"]),
+                         "95% CI, quarters": "[{:+.3f}, {:+.3f}]".format(*r["quarter"]),
+                         "excludes 0": "yes" if excludes_zero else "no"})
+    print(pd.DataFrame(rows).to_string(index=False))
+    if args.ci:
+        print("CIs resample whole firms or whole quarters; 'excludes 0' requires both to.")
 
 
 def main():
@@ -166,6 +181,8 @@ def main():
             s.add_argument("--by", help="also value sources within each group of this column, e.g. sector")
             s.add_argument("--metric", choices=["skill", "skill_ex_covid"], default="skill",
                            help="forecast skill measure the sources are valued on")
+            s.add_argument("--ci", action="store_true", help="add 95%% cluster-bootstrap confidence intervals")
+            s.add_argument("--n-boot", type=int, default=1000)
         if name == "evaluate":
             s.add_argument("--holdout", action="store_true", help="score the untouched holdout period")
             s.add_argument("--train-covid", action="store_true", help="also train on Apr 2020 - Dec 2021")
