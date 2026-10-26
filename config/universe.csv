@@ -1,0 +1,30 @@
+# Starter universe: US consumer firms filing 10-Qs. Wikipedia titles are a hand-made v0;
+# the LLM entity-resolution step will replace them. Titles that 404 are reported by the CLI.
+ticker,company,sector,wiki_articles
+CMG,Chipotle Mexican Grill,restaurants,Chipotle_Mexican_Grill
+SBUX,Starbucks,restaurants,Starbucks
+MCD,McDonald's,restaurants,McDonald's
+DPZ,Domino's Pizza,restaurants,Domino's
+YUM,Yum! Brands,restaurants,Yum!_Brands;KFC;Taco_Bell;Pizza_Hut
+WING,Wingstop,restaurants,Wingstop
+SHAK,Shake Shack,restaurants,Shake_Shack
+NFLX,Netflix,media,Netflix
+ROKU,Roku,media,Roku
+NKE,Nike,apparel,"Nike,_Inc."
+CROX,Crocs,apparel,Crocs
+LULU,Lululemon,apparel,Lululemon_Athletica
+ULTA,Ulta Beauty,retail,Ulta_Beauty
+COST,Costco,retail,Costco
+TGT,Target,retail,Target_Corporation
+WMT,Walmart,retail,Walmart
+ETSY,Etsy,ecommerce,Etsy
+EBAY,eBay,ecommerce,EBay
+ABNB,Airbnb,travel,Airbnb
+UBER,Uber,mobility,Uber
+LYFT,Lyft,mobility,Lyft
+DASH,DoorDash,delivery,DoorDash
+PTON,Peloton,fitness,Peloton_Interactive
+DUOL,Duolingo,apps,Duolingo
+PINS,Pinterest,social,Pinterest
+SNAP,Snap,social,Snap_Inc.;Snapchat
+MTCH,Match Group,apps,Match_Group;Tinder_(app);Hinge_(app)
