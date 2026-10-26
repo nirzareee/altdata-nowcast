@@ -76,8 +76,18 @@ def pageviews_daily(pageviews):
     )
 
 
+def log_growth(revenue):
+    """ln(revenue / revenue a year earlier). Percent growth from a near-zero base
+    (cruise lines and casinos in 2021) is unbounded; log growth keeps a crash and its
+    recovery symmetric. Non-positive revenue is treated as missing."""
+    r = revenue.copy()
+    g = r["yoy_growth"]
+    r["yoy_growth"] = np.log1p(g.where(g > -1))
+    return r
+
+
 def build_panel(revenue, pageviews=None, study_start=STUDY_START):
-    panel = quarter_panel(revenue)
+    panel = quarter_panel(log_growth(revenue))
     panel = panel[panel["start"] >= study_start].reset_index(drop=True)
     if pageviews is not None and not pageviews.empty:
         panel = daily_source_features(panel, pageviews_daily(pageviews), "wiki")

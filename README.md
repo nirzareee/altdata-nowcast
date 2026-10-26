@@ -17,7 +17,7 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 
 Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
 
-### Pilot results (27 firms, Huber model, scored outside the holdout)
+### Pilot results (27 firms, Huber model, percent growth, COVID window to Dec 2021)
 
 | Firms | Revenue history: skill ex-COVID | Wikipedia: Shapley value | n |
 | --- | --- | --- | --- |
@@ -62,14 +62,14 @@ python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 
 `evaluate --holdout` scores the period from 2024-07-01 on. It is run once, at the end.
 
-Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid` includes Apr 2020–Dec 2021 in training, for comparison.
+Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid` includes Apr 2020–Dec 2022 in training, for comparison.
 
 ### Reading `evaluate`
 
 | Column | Meaning |
 | --- | --- |
 | `skill` | 1 − MAE / naive MAE. Naive = growth stays at the last reported rate. Above 0 beats naive |
-| `skill_ex_covid` | Same, excluding quarters ending Apr 2020 – Dec 2021 |
+| `skill_ex_covid` | Same, excluding quarters ending Apr 2020 – Dec 2022 (2022 is compared against COVID-year revenue) |
 | `accel_hit_rate` | How often the forecast gets the direction of change in growth right |
 | `(mean)` row | No data: naive plus the average historical change |
 
@@ -79,7 +79,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | --- | --- |
 | Keep first-reported revenue, not restated | Restatements were not known at forecast time |
 | Derive Q4 as fiscal year minus Q1–Q3 | Q4 is only reported inside the 10-K |
-| Target year-over-year growth | Comparable across firm sizes; removes seasonality |
+| Target year-over-year log growth, ln(revenue / year-ago revenue) | Comparable across firm sizes; removes seasonality; stays bounded when the year-ago base is near zero (cruise lines, casinos in 2021) |
 | Predict change from last growth | Small, noisy panel; anchoring on naive avoids fitting noise |
 | Don't train on COVID quarters; Huber loss; clip at ±100 pts | One extreme regime shouldn't set the rules for every other quarter |
 | Growth features only, no levels | Raw pageviews are not comparable across firms |

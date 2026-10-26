@@ -71,6 +71,11 @@ def cmd_panel(args):
     panel = build_panel(*load_data(args))
     panel.to_parquet(PANEL, index=False)
     print(f"wrote {len(panel):,} rows x {panel.shape[1]} cols to {PANEL}")
+    feats = [c for c in panel.columns if "__" in c]
+    print("feature coverage:", ", ".join(f"{c} {panel[c].notna().mean():.0%}" for c in feats))
+    extreme = panel.reindex(panel["yoy_growth"].abs().sort_values(ascending=False).index).head(5)
+    print("most extreme quarters (log growth):")
+    print(extreme[["ticker", "end", "yoy_growth"]].to_string(index=False, float_format="%.2f"))
 
 
 def load_panel(args):

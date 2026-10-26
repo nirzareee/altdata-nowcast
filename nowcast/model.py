@@ -22,8 +22,9 @@ MODELS = {
     "gbm": lambda: HistGradientBoostingRegressor(max_depth=2, learning_rate=0.05, max_iter=100, random_state=0),
 }
 HOLDOUT_START = pd.Timestamp("2024-07-01")
-COVID = (pd.Timestamp("2020-04-01"), pd.Timestamp("2021-12-31"))  # quarters ending in this range
-CLIP = 1.0  # cap features and training targets at +/-100 percentage points of growth
+# Quarters ending in this range: COVID itself, plus 2022, whose year-ago base is a COVID quarter.
+COVID = (pd.Timestamp("2020-04-01"), pd.Timestamp("2022-12-31"))
+CLIP = 1.0  # cap features and training targets at +/-1 log point (about -63% / +172%)
 
 
 def source_columns(panel, sources):

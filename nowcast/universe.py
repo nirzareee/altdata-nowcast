@@ -17,9 +17,19 @@ def _text(cell):
     return cell[0] if isinstance(cell, tuple) else cell
 
 
+WIKI_PREFIXES = ("https://en.wikipedia.org/wiki/", "//en.wikipedia.org/wiki/", "/wiki/", "./")
+
+
 def _article(cell):
+    """Article title from a link; Wikipedia serves '/wiki/Title' or, in newer HTML, './Title'."""
     href = cell[1] if isinstance(cell, tuple) else None
-    return unquote(href.removeprefix("/wiki/")) if href and href.startswith("/wiki/") else None
+    if not href:
+        return None
+    for prefix in WIKI_PREFIXES:
+        if href.startswith(prefix):
+            title = unquote(href.removeprefix(prefix).split("#")[0])
+            return title if title and ":" not in title else None
+    return None
 
 
 def parse_constituents(html, sectors=SECTORS):

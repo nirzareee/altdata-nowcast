@@ -1,101 +1,101 @@
 ticker,company,sector,sub_industry,cik,wiki_articles
-APP,AppLovin,Communication Services,Advertising,1751008,
-CHTR,Charter Communications,Communication Services,Cable & Satellite,1091667,
-CMCSA,Comcast,Communication Services,Cable & Satellite,1166691,
-DIS,Walt Disney Company (The),Communication Services,Movies & Entertainment,1744489,
-ECHO,EchoStar,Communication Services,Wireless Telecommunication Services,1415404,
-FOXA,Fox Corporation (Class A),Communication Services,Broadcasting,1754301,
-GOOGL,Alphabet Inc. (Class A),Communication Services,Interactive Media & Services,1652044,
-LYV,Live Nation Entertainment,Communication Services,Movies & Entertainment,1335258,
-META,Meta Platforms,Communication Services,Interactive Media & Services,1326801,
-NFLX,Netflix,Communication Services,Movies & Entertainment,1065280,
-NWSA,News Corp (Class A),Communication Services,Publishing,1564708,
-OMC,Omnicom Group,Communication Services,Advertising,29989,
-RDDT,Reddit,Communication Services,Interactive Media & Services,1713445,
-SKYD,Skydance,Communication Services,Movies & Entertainment,2041610,
-T,AT&T,Communication Services,Integrated Telecommunication Services,732717,
-TKO,TKO Group Holdings,Communication Services,Movies & Entertainment,1973266,
-TMUS,T-Mobile US,Communication Services,Wireless Telecommunication Services,1283699,
-TTWO,Take-Two Interactive,Communication Services,Interactive Home Entertainment,946581,
-VZ,Verizon,Communication Services,Integrated Telecommunication Services,732712,
-ABNB,Airbnb,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1559720,
-AMZN,Amazon,Consumer Discretionary,Broadline Retail,1018724,
-APTV,Aptiv,Consumer Discretionary,Automotive Parts & Equipment,1521332,
-AZO,AutoZone,Consumer Discretionary,Automotive Retail,866787,
-BBY,Best Buy,Consumer Discretionary,Computer & Electronics Retail,764478,
-BKNG,Booking Holdings,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1075531,
-CCL,Carnival Corporation,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",815097,
-CMG,Chipotle Mexican Grill,Consumer Discretionary,Restaurants,1058090,
-CVNA,Carvana,Consumer Discretionary,Automotive Retail,1690820,
-DASH,DoorDash,Consumer Discretionary,Specialized Consumer Services,1792789,
-DECK,Deckers Brands,Consumer Discretionary,Footwear,910521,
-DHI,D. R. Horton,Consumer Discretionary,Homebuilding,882184,
-DPZ,Domino's,Consumer Discretionary,Restaurants,1286681,
-DRI,Darden Restaurants,Consumer Discretionary,Restaurants,940944,
-EBAY,eBay Inc.,Consumer Discretionary,Broadline Retail,1065088,
-EXPE,Expedia Group,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1324424,
-F,Ford Motor Company,Consumer Discretionary,Automobile Manufacturers,37996,
-GM,General Motors,Consumer Discretionary,Automobile Manufacturers,1467858,
-GPC,Genuine Parts Company,Consumer Discretionary,Distributors,40987,
-GRMN,Garmin,Consumer Discretionary,Consumer Electronics,1121788,
-HAS,Hasbro,Consumer Discretionary,Leisure Products,46080,
-HD,Home Depot (The),Consumer Discretionary,Home Improvement Retail,354950,
-HLT,Hilton Worldwide,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1585689,
-LEN,Lennar,Consumer Discretionary,Homebuilding,920760,
-LOW,Lowe's,Consumer Discretionary,Home Improvement Retail,60667,
-LULU,Lululemon Athletica,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1397187,
-LVS,Las Vegas Sands,Consumer Discretionary,Casinos & Gaming,1300514,
-MAR,Marriott International,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1048286,
-MCD,McDonald's,Consumer Discretionary,Restaurants,63908,
-MGM,MGM Resorts,Consumer Discretionary,Casinos & Gaming,789570,
-NCLH,Norwegian Cruise Line Holdings,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1513761,
-NKE,"Nike, Inc.",Consumer Discretionary,"Apparel, Accessories & Luxury Goods",320187,
-NVR,"NVR, Inc.",Consumer Discretionary,Homebuilding,906163,
-ORLY,O'Reilly Automotive,Consumer Discretionary,Automotive Retail,898173,
-PHM,PulteGroup,Consumer Discretionary,Homebuilding,822416,
-RCL,Royal Caribbean Group,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",884887,
-RL,Ralph Lauren Corporation,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1037038,
-ROST,Ross Stores,Consumer Discretionary,Apparel Retail,745732,
-SBUX,Starbucks,Consumer Discretionary,Restaurants,829224,
-TJX,TJX Companies,Consumer Discretionary,Apparel Retail,109198,
-TPR,"Tapestry, Inc.",Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1116132,
-TSCO,Tractor Supply,Consumer Discretionary,Other Specialty Retail,916365,
-TSLA,"Tesla, Inc.",Consumer Discretionary,Automobile Manufacturers,1318605,
-ULTA,Ulta Beauty,Consumer Discretionary,Other Specialty Retail,1403568,
-WSM,"Williams-Sonoma, Inc.",Consumer Discretionary,Homefurnishing Retail,719955,
-WYNN,Wynn Resorts,Consumer Discretionary,Casinos & Gaming,1174922,
-YUM,Yum! Brands,Consumer Discretionary,Restaurants,1041061,
-ADM,Archer Daniels Midland,Consumer Staples,Agricultural Products & Services,7084,
-BF-B,Brown–Forman,Consumer Staples,Distillers & Vintners,14693,
-BG,Bunge Global,Consumer Staples,Agricultural Products & Services,1996862,
-CASY,Casey's,Consumer Staples,Food Retail,726958,
-CHD,Church & Dwight,Consumer Staples,Household Products,313927,
-CL,Colgate-Palmolive,Consumer Staples,Household Products,21665,
-CLX,Clorox,Consumer Staples,Household Products,21076,
-COST,Costco,Consumer Staples,Consumer Staples Merchandise Retail,909832,
-DG,Dollar General,Consumer Staples,Consumer Staples Merchandise Retail,29534,
-DLTR,Dollar Tree,Consumer Staples,Consumer Staples Merchandise Retail,935703,
-EL,Estée Lauder Companies (The),Consumer Staples,Personal Care Products,1001250,
-GIS,General Mills,Consumer Staples,Packaged Foods & Meats,40704,
-HRL,Hormel Foods,Consumer Staples,Packaged Foods & Meats,48465,
-HSY,Hershey Company (The),Consumer Staples,Packaged Foods & Meats,47111,
-KDP,Keurig Dr Pepper,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,1418135,
-KHC,Kraft Heinz,Consumer Staples,Packaged Foods & Meats,1637459,
-KMB,Kimberly-Clark,Consumer Staples,Household Products,55785,
-KO,Coca-Cola Company (The),Consumer Staples,Soft Drinks & Non-alcoholic Beverages,21344,
-KR,Kroger,Consumer Staples,Food Retail,56873,
-KVUE,Kenvue,Consumer Staples,Personal Care Products,1944048,
-MDLZ,Mondelez International,Consumer Staples,Packaged Foods & Meats,1103982,
-MKC,McCormick & Company,Consumer Staples,Packaged Foods & Meats,63754,
-MNST,Monster Beverage,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,865752,
-MO,Altria,Consumer Staples,Tobacco,764180,
-PEP,PepsiCo,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,77476,
-PG,Procter & Gamble,Consumer Staples,Personal Care Products,80424,
-PM,Philip Morris International,Consumer Staples,Tobacco,1413329,
-SJM,J.M. Smucker Company (The),Consumer Staples,Packaged Foods & Meats,91419,
-STZ,Constellation Brands,Consumer Staples,Distillers & Vintners,16918,
-SYY,Sysco,Consumer Staples,Food Distributors,96021,
-TGT,Target Corporation,Consumer Staples,Consumer Staples Merchandise Retail,27419,
-TSN,Tyson Foods,Consumer Staples,Packaged Foods & Meats,100493,
-VYLR,Vylor,Consumer Staples,Agricultural Products & Services,2128626,
-WMT,Walmart,Consumer Staples,Consumer Staples Merchandise Retail,104169,
+APP,AppLovin,Communication Services,Advertising,1751008,AppLovin
+CHTR,Charter Communications,Communication Services,Cable & Satellite,1091667,Charter_Communications
+CMCSA,Comcast,Communication Services,Cable & Satellite,1166691,Comcast
+DIS,Walt Disney Company (The),Communication Services,Movies & Entertainment,1744489,The_Walt_Disney_Company
+ECHO,EchoStar,Communication Services,Wireless Telecommunication Services,1415404,EchoStar
+FOXA,Fox Corporation (Class A),Communication Services,Broadcasting,1754301,Fox_Corporation
+GOOGL,Alphabet Inc. (Class A),Communication Services,Interactive Media & Services,1652044,Alphabet_Inc.
+LYV,Live Nation Entertainment,Communication Services,Movies & Entertainment,1335258,Live_Nation_Entertainment
+META,Meta Platforms,Communication Services,Interactive Media & Services,1326801,Meta_Platforms
+NFLX,Netflix,Communication Services,Movies & Entertainment,1065280,"Netflix,_Inc."
+NWSA,News Corp (Class A),Communication Services,Publishing,1564708,News_Corp
+OMC,Omnicom Group,Communication Services,Advertising,29989,Omnicom_Group
+RDDT,Reddit,Communication Services,Interactive Media & Services,1713445,Reddit
+SKYD,Skydance,Communication Services,Movies & Entertainment,2041610,Skydance
+T,AT&T,Communication Services,Integrated Telecommunication Services,732717,AT&T
+TKO,TKO Group Holdings,Communication Services,Movies & Entertainment,1973266,TKO_Group_Holdings
+TMUS,T-Mobile US,Communication Services,Wireless Telecommunication Services,1283699,T-Mobile_US
+TTWO,Take-Two Interactive,Communication Services,Interactive Home Entertainment,946581,Take-Two_Interactive
+VZ,Verizon,Communication Services,Integrated Telecommunication Services,732712,Verizon
+ABNB,Airbnb,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1559720,Airbnb
+AMZN,Amazon,Consumer Discretionary,Broadline Retail,1018724,Amazon_(company)
+APTV,Aptiv,Consumer Discretionary,Automotive Parts & Equipment,1521332,Aptiv
+AZO,AutoZone,Consumer Discretionary,Automotive Retail,866787,AutoZone
+BBY,Best Buy,Consumer Discretionary,Computer & Electronics Retail,764478,Best_Buy
+BKNG,Booking Holdings,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1075531,Booking_Holdings
+CCL,Carnival Corporation,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",815097,Carnival_Corporation
+CMG,Chipotle Mexican Grill,Consumer Discretionary,Restaurants,1058090,Chipotle_Mexican_Grill
+CVNA,Carvana,Consumer Discretionary,Automotive Retail,1690820,Carvana
+DASH,DoorDash,Consumer Discretionary,Specialized Consumer Services,1792789,DoorDash
+DECK,Deckers Brands,Consumer Discretionary,Footwear,910521,Deckers_Brands
+DHI,D. R. Horton,Consumer Discretionary,Homebuilding,882184,D._R._Horton
+DPZ,Domino's,Consumer Discretionary,Restaurants,1286681,Domino's
+DRI,Darden Restaurants,Consumer Discretionary,Restaurants,940944,Darden_Restaurants
+EBAY,eBay Inc.,Consumer Discretionary,Broadline Retail,1065088,EBay
+EXPE,Expedia Group,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1324424,Expedia_Group
+F,Ford Motor Company,Consumer Discretionary,Automobile Manufacturers,37996,Ford_Motor_Company
+GM,General Motors,Consumer Discretionary,Automobile Manufacturers,1467858,General_Motors
+GPC,Genuine Parts Company,Consumer Discretionary,Distributors,40987,Genuine_Parts_Company
+GRMN,Garmin,Consumer Discretionary,Consumer Electronics,1121788,Garmin
+HAS,Hasbro,Consumer Discretionary,Leisure Products,46080,Hasbro
+HD,Home Depot (The),Consumer Discretionary,Home Improvement Retail,354950,Home_Depot
+HLT,Hilton Worldwide,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1585689,Hilton_Worldwide
+LEN,Lennar,Consumer Discretionary,Homebuilding,920760,Lennar
+LOW,Lowe's,Consumer Discretionary,Home Improvement Retail,60667,Lowe's
+LULU,Lululemon Athletica,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1397187,Lululemon
+LVS,Las Vegas Sands,Consumer Discretionary,Casinos & Gaming,1300514,Las_Vegas_Sands
+MAR,Marriott International,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1048286,Marriott_International
+MCD,McDonald's,Consumer Discretionary,Restaurants,63908,McDonald's
+MGM,MGM Resorts,Consumer Discretionary,Casinos & Gaming,789570,MGM_Resorts
+NCLH,Norwegian Cruise Line Holdings,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",1513761,Norwegian_Cruise_Line_Holdings
+NKE,"Nike, Inc.",Consumer Discretionary,"Apparel, Accessories & Luxury Goods",320187,"Nike,_Inc."
+NVR,"NVR, Inc.",Consumer Discretionary,Homebuilding,906163,"NVR,_Inc."
+ORLY,O'Reilly Automotive,Consumer Discretionary,Automotive Retail,898173,O'Reilly_Auto_Parts
+PHM,PulteGroup,Consumer Discretionary,Homebuilding,822416,PulteGroup
+RCL,Royal Caribbean Group,Consumer Discretionary,"Hotels, Resorts & Cruise Lines",884887,Royal_Caribbean_Group
+RL,Ralph Lauren Corporation,Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1037038,Ralph_Lauren_Corporation
+ROST,Ross Stores,Consumer Discretionary,Apparel Retail,745732,Ross_Stores
+SBUX,Starbucks,Consumer Discretionary,Restaurants,829224,Starbucks
+TJX,TJX Companies,Consumer Discretionary,Apparel Retail,109198,TJX_Companies
+TPR,"Tapestry, Inc.",Consumer Discretionary,"Apparel, Accessories & Luxury Goods",1116132,"Tapestry,_Inc."
+TSCO,Tractor Supply,Consumer Discretionary,Other Specialty Retail,916365,Tractor_Supply
+TSLA,"Tesla, Inc.",Consumer Discretionary,Automobile Manufacturers,1318605,"Tesla,_Inc."
+ULTA,Ulta Beauty,Consumer Discretionary,Other Specialty Retail,1403568,Ulta_Beauty
+WSM,"Williams-Sonoma, Inc.",Consumer Discretionary,Homefurnishing Retail,719955,"Williams-Sonoma,_Inc."
+WYNN,Wynn Resorts,Consumer Discretionary,Casinos & Gaming,1174922,Wynn_Resorts
+YUM,Yum! Brands,Consumer Discretionary,Restaurants,1041061,Yum!_Brands
+ADM,Archer Daniels Midland,Consumer Staples,Agricultural Products & Services,7084,Archer_Daniels_Midland
+BF-B,Brown–Forman,Consumer Staples,Distillers & Vintners,14693,Brown–Forman
+BG,Bunge Global,Consumer Staples,Agricultural Products & Services,1996862,Bunge_Global
+CASY,Casey's,Consumer Staples,Food Retail,726958,Casey's
+CHD,Church & Dwight,Consumer Staples,Household Products,313927,Church_&_Dwight
+CL,Colgate-Palmolive,Consumer Staples,Household Products,21665,Colgate-Palmolive
+CLX,Clorox,Consumer Staples,Household Products,21076,Clorox
+COST,Costco,Consumer Staples,Consumer Staples Merchandise Retail,909832,Costco
+DG,Dollar General,Consumer Staples,Consumer Staples Merchandise Retail,29534,Dollar_General
+DLTR,Dollar Tree,Consumer Staples,Consumer Staples Merchandise Retail,935703,Dollar_Tree
+EL,Estée Lauder Companies (The),Consumer Staples,Personal Care Products,1001250,The_Estée_Lauder_Companies
+GIS,General Mills,Consumer Staples,Packaged Foods & Meats,40704,General_Mills
+HRL,Hormel Foods,Consumer Staples,Packaged Foods & Meats,48465,Hormel_Foods
+HSY,Hershey Company (The),Consumer Staples,Packaged Foods & Meats,47111,The_Hershey_Company
+KDP,Keurig Dr Pepper,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,1418135,Keurig_Dr_Pepper
+KHC,Kraft Heinz,Consumer Staples,Packaged Foods & Meats,1637459,Kraft_Heinz
+KMB,Kimberly-Clark,Consumer Staples,Household Products,55785,Kimberly-Clark
+KO,Coca-Cola Company (The),Consumer Staples,Soft Drinks & Non-alcoholic Beverages,21344,The_Coca-Cola_Company
+KR,Kroger,Consumer Staples,Food Retail,56873,Kroger
+KVUE,Kenvue,Consumer Staples,Personal Care Products,1944048,Kenvue
+MDLZ,Mondelez International,Consumer Staples,Packaged Foods & Meats,1103982,Mondelez_International
+MKC,McCormick & Company,Consumer Staples,Packaged Foods & Meats,63754,McCormick_&_Company
+MNST,Monster Beverage,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,865752,Monster_Beverage
+MO,Altria,Consumer Staples,Tobacco,764180,Altria
+PEP,PepsiCo,Consumer Staples,Soft Drinks & Non-alcoholic Beverages,77476,PepsiCo
+PG,Procter & Gamble,Consumer Staples,Personal Care Products,80424,Procter_&_Gamble
+PM,Philip Morris International,Consumer Staples,Tobacco,1413329,Philip_Morris_International
+SJM,J.M. Smucker Company (The),Consumer Staples,Packaged Foods & Meats,91419,The_J.M._Smucker_Company
+STZ,Constellation Brands,Consumer Staples,Distillers & Vintners,16918,Constellation_Brands
+SYY,Sysco,Consumer Staples,Food Distributors,96021,Sysco
+TGT,Target Corporation,Consumer Staples,Consumer Staples Merchandise Retail,27419,Target_Corporation
+TSN,Tyson Foods,Consumer Staples,Packaged Foods & Meats,100493,Tyson_Foods
+VYLR,Vylor,Consumer Staples,Agricultural Products & Services,2128626,Vylor
+WMT,Walmart,Consumer Staples,Consumer Staples Merchandise Retail,104169,Walmart
