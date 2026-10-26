@@ -13,9 +13,26 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 3. **Forecast** with walk-forward models: for each quarter, train only on quarters already reported, then predict.
 4. **Value each source** with Shapley values: a source's average contribution to forecast skill across every combination of the other sources. Overlapping sources share credit instead of each claiming it.
 
-## Current status
+## Results
 
-Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
+99 S&P 500 consumer firms, 2016–2026, about 3,700 firm-quarters. Models were developed on nowcasts up to June 2024; nowcasts from July 2024 on (882 firm-quarters) were held out and scored once.
+
+![Source values](results/source_values.png)
+
+| Source | Development, all quarters | Development, outside COVID | Holdout | Verdict |
+| --- | --- | --- | --- | --- |
+| Revenue history | +0.056 [+0.034, +0.081] | +0.050 [+0.034, +0.066] | +0.035 [+0.005, +0.063] | Helps, including out of sample |
+| Census retail sales | +0.030 [+0.010, +0.044] | −0.003 [−0.012, +0.005] | −0.002 [−0.009, +0.004] | Helps only in a macro shock |
+| Wikipedia pageviews | −0.005 [−0.015, −0.000] | −0.011 [−0.034, +0.001] | −0.002 [−0.009, +0.004] | No value; slightly harmful in development |
+
+Shapley value of each source, with 95% intervals (wider of firm- and quarter-clustered bootstrap). Full tables: [results/summary.md](results/summary.md).
+
+1. **Firm-level revenue history is the only source with lasting value.** On the holdout it beats the naive forecast by 3% (Diebold-Mariano p = 0.011) and calls the direction of change in growth 61% of the time.
+2. **Macro category data is a shock detector.** Census retail sales by category carried real value through COVID, when whole categories moved together, and none in normal quarters, including the holdout.
+3. **Free attention data adds nothing.** Wikipedia pageviews add no skill in any sector, business model or period; where significant, they hurt, as models fit noise.
+4. **Method matters more than models.** Point-in-time data, robust loss and anchoring on the naive forecast moved results more than any model choice did; see the development log below.
+
+## Development log
 
 ### Step 4 results: are the values real? (95% CIs, wider of firm- and quarter-clustered bootstrap)
 
@@ -141,7 +158,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 - [x] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
 - [x] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
 - [x] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
-- [ ] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
+- [x] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
 - [ ] LLM entity resolution (dropped from the core plan: Wikipedia showed no value even with hand-verified pages)
 - [ ] Google Trends, if official API access is granted
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance
