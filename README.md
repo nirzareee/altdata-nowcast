@@ -108,6 +108,7 @@ pytest -q
 python -m nowcast.cli universe       # firm list        -> config/universe_sp500.csv
 python -m nowcast.cli targets        # SEC revenue      -> data/processed/revenue_quarterly.parquet
 python -m nowcast.cli pageviews      # Wikipedia views  -> data/processed/pageviews_daily.parquet
+python -m nowcast.cli releases       # earnings press releases (8-K Item 2.02) -> data/raw/releases/
 python -m nowcast.cli retail         # Census retail sales, every vintage -> data/processed/retail_vintages.parquet
 python -m nowcast.cli panel          # features         -> data/processed/panel.parquet
 python -m nowcast.cli evaluate       # forecast skill per source combination

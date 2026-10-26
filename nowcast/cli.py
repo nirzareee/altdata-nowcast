@@ -9,6 +9,7 @@ PAGEVIEWS = OUT / "pageviews_daily.parquet"
 PANEL = OUT / "panel.parquet"
 RETAIL = OUT / "retail_vintages.parquet"
 RETAIL_MAP = OUT / "retail_map.csv"
+RELEASES = OUT / "releases.parquet"
 UNIVERSE = "config/universe_sp500.csv"
 
 
@@ -69,6 +70,18 @@ def cmd_retail(args):
     print(f"wrote {len(df):,} vintage rows for {df['series'].nunique()} series to {RETAIL}")
     print(f"firm -> category map in {RETAIL_MAP}:")
     print(mapping["retail_series"].value_counts().to_string())
+    report_missing(missing)
+
+
+def cmd_releases(args):
+    from .http import Client
+    from .releases import build_releases
+
+    df, missing = build_releases(Client(), read_universe(args), args.since)
+    df.to_parquet(RELEASES, index=False)
+    print(f"wrote {len(df):,} press releases for {df['ticker'].nunique()} firms to {RELEASES}")
+    print(f"median length {int(df['chars'].median()):,} characters; "
+          f"releases per firm: min {df.groupby('ticker').size().min()}, median {int(df.groupby('ticker').size().median())}")
     report_missing(missing)
 
 
@@ -196,6 +209,9 @@ def main():
     s.add_argument("--n-boot", type=int, default=1000)
     s.set_defaults(where=None)
 
+    s = sub.add_parser("releases", help="earnings press releases (8-K Item 2.02, Exhibit 99)")
+    s.add_argument("--since", default="2015-06-01")
+
     s = sub.add_parser("retail")
     s.add_argument("--refresh", action="store_true", help="re-download all vintages")
 
@@ -219,7 +235,7 @@ def main():
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"revision-bias": cmd_revision_bias, "report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"releases": cmd_releases, "revision-bias": cmd_revision_bias, "report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 
