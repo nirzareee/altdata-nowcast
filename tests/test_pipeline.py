@@ -84,3 +84,10 @@ def test_covid_shock_does_not_poison_normal_years():
     poisoned = evaluate(panel, ["rev"], "ridge", train_covid=True)["skill_ex_covid"]
     robust = evaluate(panel, ["rev"])["skill_ex_covid"]
     assert robust > poisoned  # log growth already shrinks the shock, so the margin is small
+
+
+def test_zero_base_growth_is_missing():
+    from nowcast.features import log_growth
+    r = pd.DataFrame({"yoy_growth": [0.1, float("inf"), -1.0, -0.5]})
+    out = log_growth(r)["yoy_growth"]
+    assert out.notna().tolist() == [True, False, False, True]

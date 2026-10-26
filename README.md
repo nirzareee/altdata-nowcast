@@ -17,6 +17,19 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 
 Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
 
+### Step 2 results (99 S&P 500 consumer firms, Huber model, log growth)
+
+| Group | Firms | n | Revenue history: Shapley value | Wikipedia: Shapley value |
+| --- | --- | --- | --- | --- |
+| All | 99 | 2,809 | +0.060 | −0.003 |
+| Consumer Staples | 33 | 893 | +0.083 | −0.002 |
+| Consumer Discretionary | 47 | 1,357 | +0.051 | 0.000 |
+| Communication Services | 19 | 366 | +0.048 | −0.001 |
+
+- **The pilot result replicates at 4× the scale.** Revenue history beats the naive forecast by 6% (5% outside COVID) and calls the direction of change 63% of the time.
+- **Wikipedia pageviews add no value in any sector.** With 90% feature coverage across 99 firms, this is a robust negative result.
+- **Past growth is most informative for consumer staples**, whose growth is steadiest.
+
 ### Pilot results (27 firms, Huber model, percent growth, COVID window to Dec 2021)
 
 | Firms | Revenue history: skill ex-COVID | Wikipedia: Shapley value | n |
@@ -91,7 +104,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 ## Roadmap
 
 - [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
-- [ ] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
+- [x] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
 - [ ] **Step 3.** Google Trends
 - [ ] **Step 4.** LLM entity resolution: map firms to brands, apps and pages
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance

@@ -79,10 +79,11 @@ def pageviews_daily(pageviews):
 def log_growth(revenue):
     """ln(revenue / revenue a year earlier). Percent growth from a near-zero base
     (cruise lines and casinos in 2021) is unbounded; log growth keeps a crash and its
-    recovery symmetric. Non-positive revenue is treated as missing."""
+    recovery symmetric. Non-positive revenue, or a zero year-ago base (new listings),
+    is treated as missing."""
     r = revenue.copy()
     g = r["yoy_growth"]
-    r["yoy_growth"] = np.log1p(g.where(g > -1))
+    r["yoy_growth"] = np.log1p(g.where(np.isfinite(g) & (g > -1)))
     return r
 
 
