@@ -12,16 +12,18 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import HuberRegressor, Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 MODELS = {
     "ridge": lambda: make_pipeline(SimpleImputer(), StandardScaler(), Ridge(alpha=10.0)),
+    "huber": lambda: make_pipeline(SimpleImputer(), StandardScaler(), HuberRegressor(alpha=1.0, max_iter=500)),
     "gbm": lambda: HistGradientBoostingRegressor(max_depth=2, learning_rate=0.05, max_iter=100, random_state=0),
 }
 HOLDOUT_START = pd.Timestamp("2024-07-01")
 COVID = (pd.Timestamp("2020-04-01"), pd.Timestamp("2021-12-31"))  # quarters ending in this range
+CLIP = 1.0  # cap features and training targets at +/-100 percentage points of growth
 
 
 def source_columns(panel, sources):
@@ -34,9 +36,15 @@ def eval_rows(panel, holdout=False):
     return p[in_holdout if holdout else ~in_holdout].sort_values("nowcast_date")
 
 
-def walk_forward(panel, sources, model="ridge", holdout=False, min_train=100):
-    """Out-of-sample predictions. Returns test rows with `pred` and `naive`."""
+def walk_forward(panel, sources, model="huber", holdout=False, min_train=100, train_covid=False):
+    """Out-of-sample predictions. Returns test rows with `pred` and `naive`.
+
+    COVID quarters are scored but, by default, not trained on: their crash-and-rebound
+    teaches a reversal rule that over-corrects every normal quarter.
+    """
     labeled = panel.dropna(subset=["yoy_growth", "rev__last_yoy"])
+    if not train_covid:
+        labeled = labeled[~labeled["end"].between(*COVID)]
     test_rows = eval_rows(panel, holdout)
     cols = source_columns(panel, sources)
 
@@ -46,13 +54,13 @@ def walk_forward(panel, sources, model="ridge", holdout=False, min_train=100):
         train = labeled[labeled["filed"] < cutoff]
         if len(train) < min_train:
             continue
-        change = train["yoy_growth"] - train["rev__last_yoy"]
+        change = (train["yoy_growth"] - train["rev__last_yoy"]).clip(-CLIP, CLIP)
         test = test.assign(naive=test["rev__last_yoy"], train_last_filed=train["filed"].max())
         usable = [c for c in cols if train[c].notna().any()]
         if usable:
             m = MODELS[model]()
-            m.fit(train[usable], change)
-            test["pred"] = test["naive"] + m.predict(test[usable])
+            m.fit(train[usable].clip(-CLIP, CLIP), change)
+            test["pred"] = test["naive"] + m.predict(test[usable].clip(-CLIP, CLIP))
         else:
             test["pred"] = test["naive"] + change.mean()
         preds.append(test)
@@ -76,5 +84,5 @@ def score(preds):
     }
 
 
-def evaluate(panel, sources, model="ridge", holdout=False):
-    return score(walk_forward(panel, sources, model, holdout))
+def evaluate(panel, sources, model="huber", holdout=False, train_covid=False):
+    return score(walk_forward(panel, sources, model, holdout, train_covid=train_covid))

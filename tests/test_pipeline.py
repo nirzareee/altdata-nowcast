@@ -71,3 +71,16 @@ def test_shapley_credits_the_informative_source(panel):
     phi, values = source_shapley(panel, SOURCES)
     assert phi["wiki"] > phi["rev"]
     assert sum(phi.values()) == pytest.approx(values[frozenset(SOURCES)] - values[frozenset()])
+
+
+def test_covid_shock_does_not_poison_normal_years():
+    """A crash-and-rebound in 2020-21 must not wreck forecasts in normal years."""
+    revenue, views = make_firms(seed=1)
+    hit = [f"F{i:02d}" for i in range(0, 15, 2)]
+    for d, s in {"2020-06-30": -0.6, "2020-09-30": -0.3, "2021-06-30": 1.5, "2021-09-30": 0.5}.items():
+        rows = revenue["ticker"].isin(hit) & (revenue["end"] == pd.Timestamp(d))
+        revenue.loc[rows, "yoy_growth"] += s
+    panel = build_panel(revenue, views)
+    poisoned = evaluate(panel, ["rev"], "ridge", train_covid=True)["skill_ex_covid"]
+    robust = evaluate(panel, ["rev"])["skill_ex_covid"]
+    assert robust > poisoned + 0.05

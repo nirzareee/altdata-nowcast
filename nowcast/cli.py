@@ -60,7 +60,7 @@ def cmd_evaluate(args):
     panel = pd.read_parquet(PANEL)
     rows = []
     for sources in ([], *[[s] for s in args.sources], args.sources):
-        r = evaluate(panel, sources, args.model, args.holdout)
+        r = evaluate(panel, sources, args.model, args.holdout, args.train_covid)
         rows.append({"sources": "+".join(sources) or "(mean)", **r})
     print(pd.DataFrame(rows).round(3).to_string(index=False))
 
@@ -90,9 +90,10 @@ def main():
     for name in ("evaluate", "value"):
         s = sub.add_parser(name)
         s.add_argument("--sources", nargs="+", default=["rev", "wiki"])
-        s.add_argument("--model", choices=["ridge", "gbm"], default="ridge")
+        s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
         if name == "evaluate":
             s.add_argument("--holdout", action="store_true", help="score the untouched holdout period")
+            s.add_argument("--train-covid", action="store_true", help="also train on Apr 2020 - Dec 2021")
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)

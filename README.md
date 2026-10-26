@@ -22,6 +22,7 @@ Early findings, before tuning:
 - **Wikipedia attention tracks revenue for platforms, not big-box retail.** Per-firm correlation between pageview growth and revenue growth is 0.5–0.6 for Airbnb, Lyft, Etsy and Uber, and near zero or negative for Walmart, Target, Costco, McDonald's and Yum.
 - **COVID dominates raw error.** Forecast errors in 2020–21 are 4–6× other years, so results are reported with and without those quarters.
 - **Predicting growth from scratch underperformed the naive forecast** in normal years. Models now predict the change from last quarter's growth instead.
+- **Training on COVID quarters poisoned normal years.** The 2020–21 crash-and-rebound taught models a reversal rule that over-corrected calm quarters (revenue-history skill outside COVID fell to −0.34). COVID quarters are now scored but not trained on, with robust (Huber) regression and clipping of extreme values.
 
 ## Setup
 
@@ -46,6 +47,8 @@ python -m nowcast.cli value          # Shapley value of each source
 
 `evaluate --holdout` scores the period from 2024-07-01 on. It is run once, at the end.
 
+Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid` includes Apr 2020–Dec 2021 in training, for comparison.
+
 ### Reading `evaluate`
 
 | Column | Meaning |
@@ -63,6 +66,7 @@ python -m nowcast.cli value          # Shapley value of each source
 | Derive Q4 as fiscal year minus Q1–Q3 | Q4 is only reported inside the 10-K |
 | Target year-over-year growth | Comparable across firm sizes; removes seasonality |
 | Predict change from last growth | Small, noisy panel; anchoring on naive avoids fitting noise |
+| Don't train on COVID quarters; Huber loss; clip at ±100 pts | One extreme regime shouldn't set the rules for every other quarter |
 | Growth features only, no levels | Raw pageviews are not comparable across firms |
 | Study starts 2016 | Pageviews begin July 2015; every quarter needs a year-ago window |
 | Exact Shapley over sources | 2ⁿ model runs is affordable for up to ~10 sources |
