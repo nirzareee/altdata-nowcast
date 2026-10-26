@@ -54,10 +54,20 @@ def cmd_panel(args):
     print(f"wrote {len(panel):,} rows x {panel.shape[1]} cols to {PANEL}")
 
 
+def load_panel(args):
+    panel = pd.read_parquet(PANEL)
+    if args.business:
+        universe = pd.read_csv(args.universe, comment="#")
+        keep = universe.loc[universe["business"] == args.business, "ticker"]
+        panel = panel[panel["ticker"].isin(keep)]
+        print(f"{args.business}: {panel['ticker'].nunique()} firms")
+    return panel
+
+
 def cmd_evaluate(args):
     from .model import evaluate
 
-    panel = pd.read_parquet(PANEL)
+    panel = load_panel(args)
     rows = []
     for sources in ([], *[[s] for s in args.sources], args.sources):
         r = evaluate(panel, sources, args.model, args.holdout, args.train_covid)
@@ -68,7 +78,7 @@ def cmd_evaluate(args):
 def cmd_value(args):
     from .valuation import source_shapley
 
-    phi, _ = source_shapley(pd.read_parquet(PANEL), args.sources, args.model)
+    phi, _ = source_shapley(load_panel(args), args.sources, args.model)
     for s, v in sorted(phi.items(), key=lambda kv: -kv[1]):
         print(f"{s:10} {v:+.3f}")
 
@@ -91,6 +101,7 @@ def main():
         s = sub.add_parser(name)
         s.add_argument("--sources", nargs="+", default=["rev", "wiki"])
         s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
+        s.add_argument("--business", choices=["digital", "physical"], help="only firms of this business model")
         if name == "evaluate":
             s.add_argument("--holdout", action="store_true", help="score the untouched holdout period")
             s.add_argument("--train-covid", action="store_true", help="also train on Apr 2020 - Dec 2021")

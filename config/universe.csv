@@ -1,30 +1,32 @@
 # Starter universe: US consumer firms filing 10-Qs. Wikipedia titles are a hand-made v0;
 # the LLM entity-resolution step will replace them. Titles that 404 are reported by the CLI.
-ticker,company,sector,wiki_articles
-CMG,Chipotle Mexican Grill,restaurants,Chipotle_Mexican_Grill
-SBUX,Starbucks,restaurants,Starbucks
-MCD,McDonald's,restaurants,McDonald's
-DPZ,Domino's Pizza,restaurants,Domino's
-YUM,Yum! Brands,restaurants,Yum!_Brands;KFC;Taco_Bell;Pizza_Hut
-WING,Wingstop,restaurants,Wingstop
-SHAK,Shake Shack,restaurants,Shake_Shack
-NFLX,Netflix,media,Netflix
-ROKU,Roku,media,Roku
-NKE,Nike,apparel,"Nike,_Inc."
-CROX,Crocs,apparel,Crocs
-LULU,Lululemon,apparel,Lululemon_Athletica
-ULTA,Ulta Beauty,retail,Ulta_Beauty
-COST,Costco,retail,Costco
-TGT,Target,retail,Target_Corporation
-WMT,Walmart,retail,Walmart
-ETSY,Etsy,ecommerce,Etsy
-EBAY,eBay,ecommerce,EBay
-ABNB,Airbnb,travel,Airbnb
-UBER,Uber,mobility,Uber
-LYFT,Lyft,mobility,Lyft
-DASH,DoorDash,delivery,DoorDash
-PTON,Peloton,fitness,Peloton_Interactive
-DUOL,Duolingo,apps,Duolingo
-PINS,Pinterest,social,Pinterest
-SNAP,Snap,social,Snap_Inc.;Snapchat
-MTCH,Match Group,apps,Match_Group;Tinder_(app);Hinge_(app)
+# business: digital = revenue earned through an app or website; physical = stores, restaurants, products.
+# Assigned by business model before looking at results (Peloton: physical, hardware-led).
+ticker,company,sector,business,wiki_articles
+CMG,Chipotle Mexican Grill,restaurants,physical,Chipotle_Mexican_Grill
+SBUX,Starbucks,restaurants,physical,Starbucks
+MCD,McDonald's,restaurants,physical,McDonald's
+DPZ,Domino's Pizza,restaurants,physical,Domino's
+YUM,Yum! Brands,restaurants,physical,Yum!_Brands;KFC;Taco_Bell;Pizza_Hut
+WING,Wingstop,restaurants,physical,Wingstop
+SHAK,Shake Shack,restaurants,physical,Shake_Shack
+NFLX,Netflix,media,digital,Netflix
+ROKU,Roku,media,digital,Roku
+NKE,Nike,apparel,physical,"Nike,_Inc."
+CROX,Crocs,apparel,physical,Crocs
+LULU,Lululemon,apparel,physical,Lululemon_Athletica
+ULTA,Ulta Beauty,retail,physical,Ulta_Beauty
+COST,Costco,retail,physical,Costco
+TGT,Target,retail,physical,Target_Corporation
+WMT,Walmart,retail,physical,Walmart
+ETSY,Etsy,ecommerce,digital,Etsy
+EBAY,eBay,ecommerce,digital,EBay
+ABNB,Airbnb,travel,digital,Airbnb
+UBER,Uber,mobility,digital,Uber
+LYFT,Lyft,mobility,digital,Lyft
+DASH,DoorDash,delivery,digital,DoorDash
+PTON,Peloton,fitness,physical,Peloton_Interactive
+DUOL,Duolingo,apps,digital,Duolingo
+PINS,Pinterest,social,digital,Pinterest
+SNAP,Snap,social,digital,Snap_Inc.;Snapchat
+MTCH,Match Group,apps,digital,Match_Group;Tinder_(app);Hinge_(app)
