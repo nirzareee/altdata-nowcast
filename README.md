@@ -17,12 +17,22 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 
 Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
 
-Early findings, before tuning:
+### Pilot results (27 firms, Huber model, scored outside the holdout)
 
-- **Wikipedia attention tracks revenue for platforms, not big-box retail.** Per-firm correlation between pageview growth and revenue growth is 0.5–0.6 for Airbnb, Lyft, Etsy and Uber, and near zero or negative for Walmart, Target, Costco, McDonald's and Yum.
-- **COVID dominates raw error.** Forecast errors in 2020–21 are 4–6× other years, so results are reported with and without those quarters.
-- **Predicting growth from scratch underperformed the naive forecast** in normal years. Models now predict the change from last quarter's growth instead.
-- **Training on COVID quarters poisoned normal years.** The 2020–21 crash-and-rebound taught models a reversal rule that over-corrected calm quarters (revenue-history skill outside COVID fell to −0.34). COVID quarters are now scored but not trained on, with robust (Huber) regression and clipping of extreme values.
+| Firms | Revenue history: skill ex-COVID | Wikipedia: Shapley value | n |
+| --- | --- | --- | --- |
+| All | +0.062 | −0.001 | 609 |
+| Digital (12) | +0.098 | −0.004 | 160 |
+| Physical (15) | +0.049 | +0.001 | 339 |
+
+- **Wikipedia pageviews add no forecasting value**, pooled or split by business model. Per-firm correlations with revenue growth reach 0.5–0.6 for Airbnb, Lyft, Etsy and Uber, but that co-movement doesn't survive into out-of-sample forecasts.
+- **Revenue history beats the naive forecast by ~5–10%** outside COVID and gets the direction of change right ~62% of the time.
+
+### What the pilot taught about method
+
+- **COVID dominates raw error.** Errors in 2020–21 are 4–6× other years; results are reported with and without those quarters.
+- **Predicting growth from scratch underperformed naive.** Models now predict the change from last quarter's growth.
+- **Squared-error models let COVID set the rules.** Ridge trained on the 2020–21 crash-and-rebound over-corrected calm quarters (skill −0.34 outside COVID). Huber loss and clipping fixed it; excluding COVID from training made little further difference.
 
 ## Setup
 
@@ -75,10 +85,10 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 
 ## Roadmap
 
-- [x] SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
-- [ ] Google Trends
-- [ ] Expand to ~100 firms selected by industry code
-- [ ] LLM entity resolution: map firms to brands, apps and pages automatically
+- [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
+- [ ] **Step 2.** Expand to ~100 firms chosen by a fixed rule, with automatic Wikipedia mapping
+- [ ] **Step 3.** Google Trends
+- [ ] **Step 4.** LLM entity resolution: map firms to brands, apps and pages
 - [ ] Job postings, Reddit/news mentions, earnings-call guidance
 - [ ] Hierarchical Bayesian model; conformal prediction intervals
 - [ ] Bootstrap confidence intervals on source values; value decay over time; value by sector
