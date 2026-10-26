@@ -1,9 +1,0 @@
-pandas>=2.1
-pyarrow>=14
-requests>=2.31
-scikit-learn>=1.4
-lxml>=5
-matplotlib>=3.8
-
-[dev]
-pytest>=8

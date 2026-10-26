@@ -32,7 +32,8 @@ Shapley value of each source, with 95% intervals (wider of firm- and quarter-clu
 1. **Firm-level revenue history is the only source with lasting value.** On the holdout it beats the naive forecast by 3% (Diebold-Mariano p = 0.011) and calls the direction of change in growth 61% of the time.
 2. **Macro category data is a shock detector.** Census retail sales by category carried real value through COVID, when whole categories moved together, and none in normal quarters, including the holdout.
 3. **Free attention data adds nothing.** Wikipedia pageviews add no skill in any sector, business model or period; where significant, they hurt, as models fit noise.
-4. **Method matters more than models.** Point-in-time data, robust loss and anchoring on the naive forecast moved results more than any model choice did; see the development log below.
+4. **Publication timing is the leak that matters.** Letting a backtest use Census months not yet released by the forecast date doubles the measured value of retail data (+0.030 → +0.059); using revised instead of as-published figures changes nothing. See [results/revision_bias.md](results/revision_bias.md).
+5. **Method matters more than models.** Point-in-time data, robust loss and anchoring on the naive forecast moved results more than any model choice did; see the development log below.
 
 ## Development log
 
@@ -162,7 +163,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 - [x] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
 - [x] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
 - [x] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
-- [ ] Revision bias: how much revised macro data inflates measured source value
+- [x] Revision bias: how much revised macro data inflates measured source value
 - [ ] LLM-extracted guidance from 8-K earnings releases
 - [ ] Event study against analyst consensus (WRDS)
 - [ ] Interactive results dashboard
