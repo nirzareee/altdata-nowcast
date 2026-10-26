@@ -132,7 +132,7 @@ def cmd_value(args):
         groups += list(panel.groupby(args.by))
     rows = []
     for name, g in groups:
-        phi, _ = source_shapley(g, args.sources, args.model)
+        phi, _ = source_shapley(g, args.sources, args.model, args.metric)
         rows.append({"group": name, "firms": g["ticker"].nunique(), "n": evaluate(g, [], args.model)["n"], **phi})
     print(pd.DataFrame(rows).round(3).to_string(index=False))
 
@@ -164,6 +164,8 @@ def main():
         s.add_argument("--where", help="filter by a universe column, e.g. sector='Consumer Staples'")
         if name == "value":
             s.add_argument("--by", help="also value sources within each group of this column, e.g. sector")
+            s.add_argument("--metric", choices=["skill", "skill_ex_covid"], default="skill",
+                           help="forecast skill measure the sources are valued on")
         if name == "evaluate":
             s.add_argument("--holdout", action="store_true", help="score the untouched holdout period")
             s.add_argument("--train-covid", action="store_true", help="also train on Apr 2020 - Dec 2021")

@@ -33,5 +33,5 @@ def shapley(sources, value):
     return phi, cache
 
 
-def source_shapley(panel, sources, model="huber"):
-    return shapley(sources, lambda s: evaluate(panel, s, model)["skill"])
+def source_shapley(panel, sources, model="huber", metric="skill"):
+    return shapley(sources, lambda s: evaluate(panel, s, model)[metric])
