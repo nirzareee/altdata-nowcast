@@ -4,3 +4,4 @@ requests>=2.31
 pytest>=8
 scikit-learn>=1.4
 lxml>=5
+matplotlib>=3.8

@@ -17,6 +17,16 @@ The test case: nowcast quarterly revenue growth for US consumer companies a week
 
 Pilot: 27 consumer firms, 2016–2026, two sources (revenue history, Wikipedia pageviews).
 
+### Step 4 results: are the values real? (95% CIs, wider of firm- and quarter-clustered bootstrap)
+
+| Source | All quarters | Outside COVID | Verdict |
+| --- | --- | --- | --- |
+| Revenue history | +0.056 [+0.034, +0.081] | +0.050 [+0.034, +0.066] | Helps in every setting; beats naive (Diebold-Mariano p = 0.005) |
+| Census retail sales | +0.030 [+0.010, +0.044] | −0.003 [−0.012, +0.005] | Helps only through COVID |
+| Wikipedia pageviews | −0.005 [−0.015, −0.000] | −0.011 [−0.034, +0.001] | Slightly hurts: adds noise the model partly fits |
+
+All sources together beat naive with p = 0.025.
+
 ### Step 3 results: Census retail sales (ALFRED vintages), 99 firms
 
 Shapley value of each source, measured on all quarters and outside COVID (Apr 2020 – Dec 2022):
@@ -84,6 +94,7 @@ python -m nowcast.cli evaluate       # forecast skill per source combination
 python -m nowcast.cli value          # Shapley value of each source
 python -m nowcast.cli value --by sector                       # ...overall and within each sector
 python -m nowcast.cli value --ci --metric skill_ex_covid       # ...with 95% confidence intervals
+python -m nowcast.cli report         # final tables + chart -> results/ (scores the holdout; runs once)
 python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 ```
 
@@ -91,7 +102,7 @@ python -m nowcast.cli evaluate --where "sector=Consumer Staples"
 
 `python -m nowcast.cli panel --synthetic` builds simulated firms with a planted signal; the pipeline should find it.
 
-`evaluate --holdout` scores the period from 2024-07-01 on. It is run once, at the end.
+The holdout (nowcasts from 2024-07-01) is scored once, by `report`. It writes `results/HOLDOUT_SCORED`, and a second run is refused without `--force`, so the holdout can't drift into a tuning set.
 
 Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid` includes Apr 2020–Dec 2022 in training, for comparison.
 
@@ -129,7 +140,7 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 - [x] **Step 1.** SEC revenue, Wikipedia pageviews, walk-forward models, Shapley valuation
 - [x] **Step 2.** Expand to S&P 500 consumer sectors (103 firms), Wikipedia mapping taken from the constituents table
 - [x] **Step 3.** Census advance retail sales by category, point-in-time via ALFRED (replaces Google Trends: `pytrends` was archived in 2025 and the official API is invite-only)
-- [ ] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
+- [x] **Step 4.** Uncertainty: bootstrap confidence intervals on source values; Diebold-Mariano tests against naive
 - [ ] **Step 5.** Final run on the untouched 2024–26 holdout; results charts
 - [ ] LLM entity resolution (dropped from the core plan: Wikipedia showed no value even with hand-verified pages)
 - [ ] Google Trends, if official API access is granted

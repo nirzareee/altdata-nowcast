@@ -44,12 +44,12 @@ def source_shapley(panel, sources, model="huber", metric="skill"):
     return shapley(sources, lambda s: evaluate(panel, s, model)[metric])
 
 
-def coalition_errors(panel, sources, model="huber"):
+def coalition_errors(panel, sources, model="huber", holdout=False):
     """Absolute out-of-sample errors for every subset of sources, on identical rows."""
     subsets = list(chain.from_iterable(combinations(sources, k) for k in range(len(sources) + 1)))
     errors, base = {}, None
     for subset in subsets:
-        p = walk_forward(panel, list(subset), model)
+        p = walk_forward(panel, list(subset), model, holdout)
         if base is None:
             base = p
             naive_err = (p["naive"] - p["yoy_growth"]).abs().to_numpy()
@@ -63,12 +63,12 @@ def _skill(err, naive_err, idx):
 
 
 def bootstrap_shapley(panel, sources, model="huber", metric="skill", n_boot=1000,
-                      clusters=("ticker", "quarter"), seed=0):
+                      clusters=("ticker", "quarter"), seed=0, holdout=False):
     """Point Shapley values plus 95% intervals, one interval per clustering.
 
     Returns {source: {"value": v, "ticker": (low, high), "quarter": (low, high)}}.
     """
-    errors, naive_err, rows = coalition_errors(panel, sources, model)
+    errors, naive_err, rows = coalition_errors(panel, sources, model, holdout)
     keep = np.arange(len(rows))
     if metric == "skill_ex_covid":
         keep = keep[~rows["end"].between(*COVID).to_numpy()]
@@ -95,3 +95,13 @@ def bootstrap_shapley(panel, sources, model="huber", metric="skill", n_boot=1000
         for s in sources:
             out[s][cluster] = tuple(np.percentile(draws[s], [2.5, 97.5]))
     return out
+
+
+def verdict(r):
+    """'helps' or 'hurts' only when both clusterings put the interval on one side of zero."""
+    lows, highs = zip(r["ticker"], r["quarter"])
+    if min(lows) > 0:
+        return "helps"
+    if max(highs) < 0:
+        return "hurts"
+    return "no effect"

@@ -125,9 +125,16 @@ def cmd_evaluate(args):
     print("dm_t > 0: beats naive; dm_p: Diebold-Mariano p-value (quarterly loss differentials, Newey-West SE)")
 
 
+def cmd_report(args):
+    from .report import build_report
+
+    path = build_report(load_panel(args), args.sources, args.model, args.n_boot, args.force)
+    print(f"wrote {path} and charts in {path.parent}/")
+
+
 def cmd_value(args):
     from .model import evaluate
-    from .valuation import bootstrap_shapley, source_shapley
+    from .valuation import bootstrap_shapley, source_shapley, verdict
 
     panel = load_panel(args)
     groups = [("all", panel)]
@@ -142,14 +149,13 @@ def cmd_value(args):
             continue
         res = bootstrap_shapley(g, args.sources, args.model, args.metric, args.n_boot)
         for s, r in res.items():
-            excludes_zero = all(lo > 0 or hi < 0 for lo, hi in (r["ticker"], r["quarter"]))
             rows.append({**base, "source": s, "value": f"{r['value']:+.3f}",
                          "95% CI, firms": "[{:+.3f}, {:+.3f}]".format(*r["ticker"]),
                          "95% CI, quarters": "[{:+.3f}, {:+.3f}]".format(*r["quarter"]),
-                         "excludes 0": "yes" if excludes_zero else "no"})
+                         "verdict": verdict(r)})
     print(pd.DataFrame(rows).to_string(index=False))
     if args.ci:
-        print("CIs resample whole firms or whole quarters; 'excludes 0' requires both to.")
+        print("CIs resample whole firms or whole quarters; a verdict needs both intervals on one side of 0.")
 
 
 def main():
@@ -165,6 +171,13 @@ def main():
         s.add_argument("--refresh", action="store_true", help="ignore cached downloads")
         s.add_argument("--start", default="2015-07-01")
         s.add_argument("--end", default=str((pd.Timestamp.today() - pd.Timedelta(days=2)).date()))
+
+    s = sub.add_parser("report", help="final results, including the one-time holdout run")
+    s.add_argument("--sources", nargs="+", default=["rev", "wiki", "retail"])
+    s.add_argument("--model", choices=["huber", "ridge", "gbm"], default="huber")
+    s.add_argument("--n-boot", type=int, default=1000)
+    s.add_argument("--force", action="store_true", help="rerun even though the holdout was already scored")
+    s.set_defaults(where=None)
 
     s = sub.add_parser("retail")
     s.add_argument("--refresh", action="store_true", help="re-download all vintages")
@@ -189,7 +202,7 @@ def main():
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 
