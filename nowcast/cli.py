@@ -73,6 +73,45 @@ def cmd_retail(args):
     report_missing(missing)
 
 
+def cmd_guidance(args):
+    import os
+    from .guidance import build_guidance, model_slug
+
+    releases = pd.read_parquet(RELEASES)
+    if args.sample:
+        releases = releases[releases["accession"].isin(pd.read_csv(args.sample)["accession"])]
+    if args.limit:
+        releases = releases.head(args.limit)
+    report = lambda n, total, errors: print(f"  {n:,}/{total:,} releases, {errors} errors", flush=True)
+    df, errors = build_guidance(releases, args.base_url, args.model, os.environ.get("LLM_API_KEY"),
+                                args.workers, progress=report)
+    path = OUT / f"guidance_{model_slug(args.model)}{'_sample' if args.sample else ''}.parquet"
+    df.to_parquet(path, index=False)
+    items = df[df.get("none", pd.Series(False, index=df.index)) != True] if len(df) else df  # noqa: E712
+    print(f"wrote {path}: {items['accession'].nunique() if len(items) else 0:,} of {len(releases):,} "
+          f"releases have revenue guidance, {len(items):,} items, "
+          f"{items['verified'].mean() if len(items) else float('nan'):.0%} verified")
+    if errors:
+        print(f"{errors} releases failed (server errors); rerun to retry them, finished ones are cached")
+
+
+def cmd_label_sample(args):
+    from .labels import make_sample
+
+    path = make_sample(pd.read_parquet(RELEASES), args.n, args.seed)
+    print(f"wrote {path} and passages in {path.parent}/passages/")
+
+
+def cmd_guidance_accuracy(args):
+    from .labels import score
+
+    for pred_path in args.preds:
+        r = score(pd.read_csv(args.labels), pd.read_parquet(pred_path))
+        print(f"\n{pred_path}")
+        for k, v in r.items():
+            print(f"  {k:32} {v:.3f}" if isinstance(v, float) else f"  {k:32} {v}")
+
+
 def cmd_releases(args):
     from .http import Client
     from .releases import build_releases
@@ -209,6 +248,21 @@ def main():
     s.add_argument("--n-boot", type=int, default=1000)
     s.set_defaults(where=None)
 
+    s = sub.add_parser("guidance", help="extract revenue guidance from press releases with an LLM")
+    s.add_argument("--base-url", default="http://localhost:8000/v1", help="OpenAI-compatible server")
+    s.add_argument("--model", required=True)
+    s.add_argument("--workers", type=int, default=16, help="concurrent requests")
+    s.add_argument("--sample", help="only releases listed in this CSV (e.g. data/labels/labels.csv)")
+    s.add_argument("--limit", type=int, help="only the first N releases (smoke test)")
+
+    s = sub.add_parser("label-sample", help="draw releases to hand-label for the accuracy benchmark")
+    s.add_argument("--n", type=int, default=200)
+    s.add_argument("--seed", type=int, default=0)
+
+    s = sub.add_parser("guidance-accuracy", help="score extractions against hand labels")
+    s.add_argument("--labels", default="data/labels/labels.csv")
+    s.add_argument("preds", nargs="+", help="guidance_*.parquet files to score")
+
     s = sub.add_parser("releases", help="earnings press releases (8-K Item 2.02, Exhibit 99)")
     s.add_argument("--since", default="2015-06-01")
 
@@ -235,7 +289,8 @@ def main():
 
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"releases": cmd_releases, "revision-bias": cmd_revision_bias, "report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
+    {"guidance": cmd_guidance, "label-sample": cmd_label_sample,
+     "guidance-accuracy": cmd_guidance_accuracy, "releases": cmd_releases, "revision-bias": cmd_revision_bias, "report": cmd_report, "universe": cmd_universe, "retail": cmd_retail, "targets": cmd_targets, "pageviews": cmd_pageviews, "panel": cmd_panel,
      "evaluate": cmd_evaluate, "value": cmd_value}[args.command](args)
 
 

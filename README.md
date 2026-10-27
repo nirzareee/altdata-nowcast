@@ -138,6 +138,26 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | `dm_t`, `dm_p` | Diebold-Mariano test against naive: t-statistic (positive = better) and p-value |
 | `(mean)` row | No data: naive plus the average historical change |
 
+## LLM guidance extraction
+
+Earnings press releases (8-K Item 2.02) often state revenue guidance. `nowcast guidance` extracts it with any OpenAI-compatible server (vLLM, Ollama or a hosted API):
+
+1. **Filter** each release to forward-looking sentences with numbers (about a tenth of the text).
+2. **Extract** structured items (period, low, high, growth or level, basis) with the exact source sentence.
+3. **Verify** that the sentence appears in the release and each number in the sentence; failures are flagged, not dropped silently.
+
+Results are cached per release and model, so interrupted runs resume.
+
+**Accuracy benchmark.** `nowcast label-sample` draws 200 releases across years and writes `data/labels/labels.csv` to fill by hand (one row per guidance item; `has_guidance = n` for none). `nowcast guidance-accuracy guidance_*.parquet` reports detection precision and recall, item recall and value accuracy for each model.
+
+**On SeaWulf** (4× A100 per node): `scripts/seawulf_guidance.slurm` serves the model with vLLM (tensor parallel 4) and runs the extraction.
+
+```bash
+ARGS="--sample data/labels/labels.csv" sbatch scripts/seawulf_guidance.slurm   # benchmark sample first
+sbatch scripts/seawulf_guidance.slurm                                          # then all releases
+MODEL=meta-llama/Llama-3.1-8B-Instruct ARGS="--sample data/labels/labels.csv" sbatch scripts/seawulf_guidance.slurm
+```
+
 ## Design decisions
 
 | Decision | Why |
@@ -153,6 +173,8 @@ Models: `--model huber` (default, robust linear), `ridge`, `gbm`. `--train-covid
 | Firms mapped to Census categories by GICS sub-industry (`nowcast/retail.py`) | A fixed rule, auditable in `data/processed/retail_map.csv`; unmatched firms use total retail and food services |
 | Confidence intervals resample forecasts, clustered by firm and separately by quarter | Errors are correlated within a firm and within a quarter (common shocks); a source counts as valuable only if both intervals exclude zero |
 | Diebold-Mariano on quarterly mean loss differentials, Newey-West SE (4 lags) | Collapsing to one value per quarter handles cross-firm correlation; Newey-West handles correlation across nearby quarters |
+| LLM output must quote its source sentence; numbers checked against it | Catches invented numbers, and stops a model trained after the fact from "correcting" guidance toward the actual result |
+| Open-weights model, version pinned, temperature 0 | Rerunnable by anyone; hosted models change or retire |
 | Exact Shapley over sources | 2ⁿ model runs is affordable for up to ~10 sources |
 
 `tests/test_pipeline.py` checks the time alignment directly: it changes every value published after a cutoff and asserts earlier features don't move.
