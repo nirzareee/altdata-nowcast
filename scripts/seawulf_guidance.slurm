@@ -11,6 +11,8 @@
 # Usage:  sbatch scripts/seawulf_guidance.slurm
 #         MODEL=Qwen/Qwen2.5-72B-Instruct sbatch scripts/seawulf_guidance.slurm
 #         ARGS="--sample data/labels/labels.csv" sbatch scripts/seawulf_guidance.slurm
+# Small model on 1 GPU (starts faster):
+#         TP=1 MODEL=Qwen/Qwen2.5-7B-Instruct sbatch --partition=a100 --gres=gpu:1 --mem=64G --time=00:30:00 scripts/seawulf_guidance.slurm
 # Finished releases are cached, so resubmitting after a timeout continues the run.
 
 set -euo pipefail
@@ -21,7 +23,7 @@ export HF_HOME=${HF_HOME:-/gpfs/scratch/$USER/hf}   # model weights (~140 GB) go
 cd "$SLURM_SUBMIT_DIR"
 source .venv/bin/activate
 
-vllm serve "$MODEL" --tensor-parallel-size 4 --max-model-len 16384 --port 8000 \
+vllm serve "$MODEL" --tensor-parallel-size ${TP:-4} --max-model-len 16384 --port 8000 \
   > "logs/vllm-$SLURM_JOB_ID.log" 2>&1 &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null || true' EXIT
