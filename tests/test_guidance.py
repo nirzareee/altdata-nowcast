@@ -19,10 +19,10 @@ For the second quarter, the company expects net revenues of $11.9 billion to $12
 Forward-looking statements are subject to risks."""
 
 GOOD = {"guidance": [
-    {"metric": "revenue", "basis": "organic", "period_type": "year", "fiscal_year": 2024, "fiscal_quarter": None,
+    {"metric": "revenue", "scope": "total", "basis": "organic", "period_type": "year", "fiscal_year": 2024, "fiscal_quarter": None,
      "kind": "growth", "low": 8, "high": 9, "scale": None,
      "quote": "The company now expects to deliver organic revenue growth of 8% to 9% for full-year 2024."},
-    {"metric": "revenue", "basis": "reported", "period_type": "quarter", "fiscal_year": 2024, "fiscal_quarter": 2,
+    {"metric": "revenue", "scope": "total", "basis": "reported", "period_type": "quarter", "fiscal_year": 2024, "fiscal_quarter": 2,
      "kind": "level", "low": 11.9, "high": 12.1, "scale": "billions",
      "quote": "For the second quarter, the company expects net revenues of $11.9 billion to $12.1 billion."},
     {"metric": "eps", "low": 2.8, "high": 2.85, "quote": "x"},
@@ -133,3 +133,54 @@ def test_label_sample_and_score(releases, tmp_path, monkeypatch):
     assert r["detection precision"] == 1 and r["detection recall"] == 1
     assert r["item recall"] == 1
     assert r["value accuracy (matched items)"] == 0.5
+
+
+# Cases from the first real run (AppLovin releases, Qwen2.5-7B-AWQ).
+TABLE_RELEASE = """Third Quarter 2025 Financial Guidance Summary:2(In millions, except percentages)3Q25LowHighRevenue$1,320$1,340
+Fourth Quarter 2025 Financial Guidance Summary:
+Revenue
+$
+1,570
+$
+1,600"""
+
+
+def test_verify_accepts_values_the_model_scaled_to_units():
+    item = {"low": 685000000.0, "high": 705000000.0,
+            "quote": "we expect consistent performance to our fourth quarter of 2022 with total revenue of $685 to $705 million"}
+    passage = "For the first quarter of 2023, " + item["quote"]
+    assert verify(item, passage)
+
+
+def test_verify_matches_table_rows_despite_broken_spacing():
+    glued = {"low": 1320, "high": 1340,
+             "quote": "Third Quarter 2025 Financial Guidance Summary: (In millions, except percentages) 3Q25 Low High Revenue $1,320 $1,340"}
+    split = {"low": 1570, "high": 1600, "quote": "Fourth Quarter 2025 Financial Guidance Summary: Revenue $1,570 $1,600"}
+    assert verify(glued, TABLE_RELEASE)
+    assert verify(split, TABLE_RELEASE)
+
+
+def test_verify_still_rejects_numbers_not_in_quote():
+    item = {"low": 1570, "high": 1650, "quote": "Fourth Quarter 2025 Financial Guidance Summary: Revenue $1,570 $1,600"}
+    assert not verify(item, TABLE_RELEASE)
+
+
+def test_segment_guidance_is_dropped():
+    content = json.dumps({"guidance": [
+        {"metric": "revenue", "scope": "segment", "low": 1030, "high": 1050, "quote": "Advertising Revenue $1,030 $1,050"},
+        {"metric": "revenue", "scope": "total", "low": 1355, "high": 1385, "quote": "Total Revenue 1,355 1,385"},
+    ]})
+    assert [i["low"] for i in parse_items(content)] == [1355]
+
+
+def test_prompt_change_gets_a_fresh_cache(releases):
+    calls = []
+    fake = lambda *a, **k: calls.append(1) or json.dumps(GOOD)
+    build_guidance(releases, "http://x", "m", call=fake)
+    old = guidance.PROMPT_VERSION
+    guidance.PROMPT_VERSION = "v-test"
+    try:
+        build_guidance(releases, "http://x", "m", call=fake)
+    finally:
+        guidance.PROMPT_VERSION = old
+    assert len(calls) == 2

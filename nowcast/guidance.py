@@ -13,12 +13,14 @@ Results are cached per release and model, so a job that hits a time limit resume
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import pandas as pd
 import requests
 
 CACHE = Path("data/raw/guidance")
+PROMPT_VERSION = "v2"  # part of the cache path: changing the prompt reruns every release
 MAX_PASSAGE_CHARS = 8000
 
 FORWARD = re.compile(
@@ -32,18 +34,33 @@ NUMBER = re.compile(r"\d")
 SYSTEM = """You extract revenue guidance from company earnings press releases.
 Return JSON only: {"guidance": [ ... ]}. Use an empty list if the text gives no revenue guidance.
 
+Guidance is what management EXPECTS for a FUTURE period ("expects", "outlook", "guidance",
+"anticipates", a guidance table). Never extract results already reported for a past period
+("revenue grew 21% to $864 million" is a result, not guidance).
+
 Each item:
-- "metric": "revenue" (also net sales, total revenues, comparable or organic sales growth)
+- "metric": "revenue" (net sales, total revenues, organic or comparable sales growth)
+- "scope": "total" for total company revenue, "segment" for a business line, region or product
 - "basis": "reported", "organic", "comparable", "constant_currency" or "other"
 - "period_type": "quarter" or "year"
 - "fiscal_year": integer, e.g. 2024
 - "fiscal_quarter": 1-4 for quarterly guidance, null for annual
-- "kind": "level" for an amount (e.g. $2.1 billion) or "growth" for a percent change
-- "low", "high": numbers exactly as written in the quote (a single value: low = high)
+- "kind": "level" for an amount or "growth" for a percent change
+- "low", "high": the numbers exactly as printed, never converted ($2.65 billion -> 2.65; a single value: low = high)
 - "scale": for levels, "units", "thousands", "millions" or "billions"; null for growth
-- "quote": the exact sentence the numbers come from, copied verbatim
+- "quote": the sentence or table row the numbers come from, copied character for character
 
-Only revenue. Ignore EPS, margins, capex and share counts. Do not compute or convert numbers."""
+Example. Text: "For fiscal 2024 we expect net sales of $2.1 to $2.2 billion, with Americas sales up 3% to 4%."
+{"guidance": [
+ {"metric": "revenue", "scope": "total", "basis": "reported", "period_type": "year", "fiscal_year": 2024,
+  "fiscal_quarter": null, "kind": "level", "low": 2.1, "high": 2.2, "scale": "billions",
+  "quote": "For fiscal 2024 we expect net sales of $2.1 to $2.2 billion, with Americas sales up 3% to 4%."},
+ {"metric": "revenue", "scope": "segment", "basis": "reported", "period_type": "year", "fiscal_year": 2024,
+  "fiscal_quarter": null, "kind": "growth", "low": 3, "high": 4, "scale": null,
+  "quote": "For fiscal 2024 we expect net sales of $2.1 to $2.2 billion, with Americas sales up 3% to 4%."}
+]}
+
+Only revenue. Ignore EPS, margins, EBITDA, capex and share counts."""
 
 
 def outlook_passages(text, context=1):
@@ -62,18 +79,42 @@ def _numbers(s):
 
 
 def _norm(s):
-    return " ".join(s.split()).lower()
+    """Letters, digits, '.', '%' only. HTML tables come out of text extraction with cells
+    glued together or split across lines, so spacing and '$' or dash characters can't be trusted."""
+    return re.sub(r"[^a-z0-9.%]", "", s.lower())
+
+
+SCALES = (1, 1e3, 1e6, 1e9)
+
+
+def _in_quote(value, nums):
+    """Value appears in the quote as printed, or converted to units from thousands/millions/billions."""
+    v = abs(float(value))
+    return any(abs(v / s - n) < 1e-6 * max(1, n) for s in SCALES for n in nums)
+
+
+def _quote_in(passage, quote, min_share=0.95):
+    """At least 95% of the quote's characters appear in the passage, in order. Exact matching
+    fails on tables, where extraction glues in footnote markers the model rightly drops."""
+    q, p = _norm(quote), _norm(passage)
+    if not q:
+        return False
+    if q in p:
+        return True
+    matched = sum(b.size for b in SequenceMatcher(None, p, q, autojunk=False).get_matching_blocks())
+    return matched / len(q) >= min_share
 
 
 def verify(item, passage):
-    """Quote appears in the passage, and low/high appear as numbers in the quote."""
+    """Quote (nearly) appears in the passage, and low/high appear as numbers in both the quote
+    and the passage, as printed or scaled to units."""
     quote = item.get("quote") or ""
-    if not quote or _norm(quote) not in _norm(passage):
+    if not _quote_in(passage, quote):
         return False
-    nums = _numbers(quote)
-    values = [item.get("low"), item.get("high")]
+    in_quote, in_passage = _numbers(quote), _numbers(passage)
+    values = [v for v in (item.get("low"), item.get("high")) if v is not None]
     try:
-        return all(v is None or abs(float(v)) in nums for v in values) and any(v is not None for v in values)
+        return bool(values) and all(_in_quote(v, in_quote) and _in_quote(v, in_passage) for v in values)
     except (TypeError, ValueError):
         return False
 
@@ -101,7 +142,8 @@ def parse_items(content):
         match = re.search(r"\{.*\}", content, re.DOTALL)  # model wrapped the JSON in prose
         data = json.loads(match.group(0)) if match else {}
     items = data.get("guidance", []) if isinstance(data, dict) else []
-    return [i for i in items if isinstance(i, dict) and i.get("metric") == "revenue"]
+    return [i for i in items if isinstance(i, dict) and i.get("metric") == "revenue"
+            and i.get("scope", "total") == "total"]
 
 
 def model_slug(model):
@@ -110,7 +152,7 @@ def model_slug(model):
 
 def extract_release(row, base_url, model, api_key=None, call=call_llm):
     """Guidance items for one release (cached). Returns a list of dicts."""
-    path = CACHE / model_slug(model) / f"{row['accession']}.json"
+    path = CACHE / model_slug(model) / PROMPT_VERSION / f"{row['accession']}.json"
     if path.exists():
         return json.loads(path.read_text())
     passage = outlook_passages(Path(row["path"]).read_text())

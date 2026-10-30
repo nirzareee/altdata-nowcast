@@ -81,7 +81,7 @@ def cmd_guidance(args):
     if args.sample:
         releases = releases[releases["accession"].isin(pd.read_csv(args.sample)["accession"])]
     if args.limit:
-        releases = releases.head(args.limit)
+        releases = releases.sample(min(args.limit, len(releases)), random_state=0)  # spread across firms
     report = lambda n, total, errors: print(f"  {n:,}/{total:,} releases, {errors} errors", flush=True)
     df, errors = build_guidance(releases, args.base_url, args.model, os.environ.get("LLM_API_KEY"),
                                 args.workers, progress=report)
@@ -253,7 +253,7 @@ def main():
     s.add_argument("--model", required=True)
     s.add_argument("--workers", type=int, default=16, help="concurrent requests")
     s.add_argument("--sample", help="only releases listed in this CSV (e.g. data/labels/labels.csv)")
-    s.add_argument("--limit", type=int, help="only the first N releases (smoke test)")
+    s.add_argument("--limit", type=int, help="only N random releases (smoke test)")
 
     s = sub.add_parser("label-sample", help="draw releases to hand-label for the accuracy benchmark")
     s.add_argument("--n", type=int, default=200)
